@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hospital Login</title>
+</head>
+<body>
+    <p>Login attempt failed.</p>
+    <form enctype="multipart/form-data" method="post" action="/api/auth">
+        <label for="user">Username:</label>
+        <input name="user" id="user">
+        <label for="user">Password:</label>
+        <input name="pass" id="pass">
+        <input hidden name="redirect" id="redirect">
+        <button type="submit">Submit</button>
+    </form>
+    <script>
+        const redirectElement = document.getElementById("redirect")
+        
+        const params = new URLSearchParams(document.location.search)
+        const redirectLocation = params.get("redirect")
+        if(redirectLocation!=null){
+            redirectElement.value = encodeURIComponent(redirectLocation)
+        }
+    </script>
+</body>
+</html>
