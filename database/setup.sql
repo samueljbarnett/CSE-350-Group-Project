@@ -1,11 +1,16 @@
--- Create the database
+-- ------------------- --
+-- Create the database --
+-- ------------------- --
 CREATE DATABASE IF NOT EXISTS `hospital_db`;
+USE `hospital_db`
 
 
 
 
 
--- Role Setup
+-- ---------- --
+-- Role Setup --
+-- ---------- --
 CREATE ROLE IF NOT EXISTS `hospital_webapp_role`;
 
 GRANT
@@ -13,16 +18,26 @@ GRANT
     ON hospital_db.*
     TO 'hospital_webapp_role';
 
+GRANT
+	EXECUTE
+	ON hospital_db.*
+	TO 'hospital_webapp_role';
 
 
 
 
--- Tables for login handling
+
+-- ----------- --
+-- Table setup --
+-- ----------- --
+
+-- Tables for login handling --
 CREATE TABLE IF NOT EXISTS `hospital_db`.`user`(
 	`user_id` INT AUTO_INCREMENT PRIMARY KEY,
 	`username` VARCHAR(15) NOT NULL,
-	`password` MEDIUMBLOB NOT NULL,
-	`active` BOOL DEFAULT FALSE NOT NULL,
+	`password` BLOB(256) NOT NULL,
+	`salt` BLOB(256) NOT NULL,
+	`active` BOOL DEFAULT TRUE NOT NULL,
 	UNIQUE INDEX `user_username_index` (`username` asc) VISIBLE
 );
 
@@ -40,7 +55,12 @@ CREATE TABLE IF NOT EXISTS `hospital_db`.`group_entry`(
 	FOREIGN KEY (`user_id`) REFERENCES `hospital_db`.`user`(`user_id`) ON DELETE RESTRICT
 );
 
-
+CREATE TABLE IF NOT EXISTS `hospital_db`.`login_tokens`(
+	`user_id` INT NOT NULL,
+	`value` TEXT(512) NOT NULL,
+	`expires` DATETIME NOT NULL,
+	FOREIGN KEY (`user_id`) REFERENCES `hospital_db`.`user`(`user_id`) ON DELETE RESTRICT
+);
 
 -- Tables for asset tracking
 CREATE TABLE IF NOT EXISTS `hospital_db`.`asset`(
@@ -72,8 +92,6 @@ CREATE TABLE IF NOT EXISTS `hospital_db`.`asset_access`(
 	FOREIGN KEY (`asset_id`) REFERENCES `hospital_db`.`asset`(`asset_id`) ON DELETE RESTRICT
 );
 
-
-
 -- Tables for diagnosises
 CREATE TABLE IF NOT EXISTS `hospital_db`.`diagnosis`(
 	`diagnosis_id` INT AUTO_INCREMENT PRIMARY KEY,
@@ -96,9 +114,6 @@ CREATE TABLE IF NOT EXISTS `hospital_db`.`diagnosis_symptom`(
 	FOREIGN KEY (`diagnosis_id`) REFERENCES `hospital_db`.`diagnosis`(`diagnosis_id`) ON DELETE RESTRICT,
 	FOREIGN KEY (`symptom_id`) REFERENCES `hospital_db`.`symptom`(`symptom_id`) ON DELETE RESTRICT
 );
-
-
-
 
 -- Tables for Patient handling
 CREATE TABLE IF NOT EXISTS `hospital_db`.`staff`(
@@ -195,3 +210,172 @@ CREATE TABLE IF NOT EXISTS `hospital_db`.`patent_symptom`(
 	FOREIGN KEY (`staff_id`) REFERENCES `hospital_db`.`staff`(`staff_id`) ON DELETE RESTRICT,
 	FOREIGN KEY (`stay_id`) REFERENCES `hospital_db`.`stay`(`stay_id`) ON DELETE RESTRICT
 );
+
+
+
+
+
+-- ---------- --
+-- Procedures --
+-- ---------- --
+
+-- create user
+DELIMITER $$
+CREATE PROCEDURE `hospital_db`.CreateUser(
+	IN p_Username VARCHAR(15),
+	IN p_Password VARCHAR(128)
+)
+BEGIN
+	-- Hash the new password
+	DECLARE p_salt BLOB(256);
+	DECLARE p_hash BLOB(256);
+
+	SET p_salt = RANDOM_BYTES(256);
+	SET p_hash = UNHEX(SHA2(CONCAT(HEX(p_salt), p_Password), 256));
+
+	-- Insert the user into the database
+	INSERT INTO `hospital_db`.`user`
+		(`username`, `password`, `salt`)
+	VALUES
+		(p_Username, p_hash, p_salt);
+
+	-- Return the user id
+	SELECT LAST_INSERT_ID() AS `user_id`;
+END$$
+DELIMITER ;
+
+-- TODO: add user to group
+
+-- authenticate user
+DELIMITER $$
+CREATE PROCEDURE `hospital_db`.AuthenticateUser(
+	IN p_Username VARCHAR(15),
+	IN p_Password VARCHAR(128)
+)
+BEGIN
+	DECLARE p_valid BOOL DEFAULT NULL;
+	DECLARE p_active BOOL DEFAULT FALSE;
+	DECLARE p_salt BLOB(256);
+	DECLARE p_existing_password BLOB(256);
+	DECLARE p_hash BLOB(256);
+
+	SELECT `active`, `salt`, `password`
+		INTO p_active, p_salt, p_existing_password
+		FROM `hospital_db`.`user`
+		WHERE `username` = p_Username;
+
+	IF (p_active = TRUE)
+	THEN
+		-- Hash the new password
+		SET p_hash = UNHEX(SHA2(CONCAT(HEX(p_salt), p_Password), 256));
+	
+		IF (p_existing_password = p_hash)
+		THEN
+			SET p_valid = TRUE;
+		END IF;
+	END IF;
+
+	SELECT p_valid AS authenticated;
+END$$
+DELIMITER ;
+
+-- authenticate user and get token
+DELIMITER $$
+CREATE PROCEDURE `hospital_db`.MakeAuthToken(
+	IN p_Username VARCHAR(15),
+	IN p_Password VARCHAR(128)
+)
+BEGIN
+	DECLARE p_token TEXT(512) DEFAULT NULL;
+	DECLARE p_active BOOL DEFAULT FALSE;
+	DECLARE p_salt BLOB(256);
+	DECLARE p_existing_password BLOB(256);
+	DECLARE p_hash BLOB(256);
+	DECLARE p_user_id INT;
+
+	SELECT `active`, `salt`, `password`, `user_id`
+		INTO p_active, p_salt, p_existing_password, p_user_id
+		FROM `hospital_db`.`user`
+		WHERE `username` = p_Username;
+
+	IF (p_active = TRUE)
+	THEN
+		-- Hash the new password
+		SET p_hash = UNHEX(SHA2(CONCAT(HEX(p_salt), p_Password), 256));
+	
+		IF (p_existing_password = p_hash)
+		THEN
+			-- Create a new login token that expires in 2 hours
+			SET p_token = HEX(RANDOM_BYTES(256));
+			INSERT INTO `hospital_db`.`login_tokens`
+				(`user_id`,`value`,`expires`)
+			VALUES
+				(p_user_id,p_token,ADDTIME(NOW(), "2:00:00"));
+		END IF;
+	END IF;
+
+	SELECT p_token AS authenticated;
+END$$
+DELIMITER ;
+
+-- TODO: authenticate user token
+DELIMITER $$
+CREATE PROCEDURE `hospital_db`.AuthenticateToken(
+	IN p_Username VARCHAR(15),
+	IN p_Token TEXT(512)
+)
+BEGIN
+	DECLARE p_valid BOOL DEFAULT FALSE;
+	DECLARE p_active BOOL DEFAULT FALSE;
+	DECLARE p_user_id INT;
+
+	SELECT `user_id`, `active`
+		INTO p_user_id, p_active
+		FROM `hospital_db`.`user`
+		WHERE `username` = p_Username;
+
+	SELECT COUNT(*) > 0 AS valid
+		FROM `hospital_db`.`login_tokens`
+		WHERE (
+			`user_id` = p_user_id
+		AND `expires` > NOW()
+		AND `value` = p_Token
+		)
+	;
+END$$
+DELIMITER ;
+
+-- TODO: create stay
+-- TODO: add patient contact
+-- TODO: remove patient contact
+-- TODO: get stay
+-- TODO: search user
+-- TODO: search active staff
+-- TODO: get staff assignments
+-- TODO: assign staff to stay
+-- TODO: remove staff to stay
+-- TODO: assign room
+-- TODO: add symptom
+-- TODO: edit symptom
+-- TODO: add medical history
+
+
+
+
+-- ----------------------- --
+-- Make some default items --
+-- ----------------------- --
+-- Create admin user
+CALL CreateUser('admin', 'password');
+-- Create admin group
+INSERT INTO `hospital_db`.`group`
+	(`name_id`) VALUES ("main_admin");
+-- Create front desk group
+INSERT INTO `hospital_db`.`group`
+	(`name_id`) VALUES ("main_front");
+-- Create adjust asset group
+INSERT INTO `hospital_db`.`group`
+	(`name_id`) VALUES ("main_asset");
+-- Create pharm tech group
+INSERT INTO `hospital_db`.`group`
+	(`name_id`) VALUES ("main_pharmtech");
