@@ -1,10 +1,31 @@
+// Load configuration
+const {parseConf}=require("./parseConf.js")
+const VARS=parseConf("./.conf",{
+    "sql_port":{
+        "type":"int",
+        "default":'33060'
+    },
+    "sql_host":{
+        "type":"string",
+        "default":'localhost'
+    },
+    "sql_user":{
+        "type":"string",
+        "default":'hospital_webapp'
+    },
+    "sql_pass":{
+        "type":"string",
+    },
+})
+
+
 // Configure mysql connection
 const mysqlx = require('@mysql/xdevapi');
 const sql_config = {
-    "host":"172.17.0.2",
-    "port":33060,
-    "user": "hospital_webapp",
-    "password":"q>}0)k%guOJaVw<rNNOo",
+    "host":VARS.sql_host,
+    "port":VARS.sql_port,
+    "user":VARS.sql_user,
+    "password":VARS.sql_pass,
     "schema": "hospital_db",
 };
 
