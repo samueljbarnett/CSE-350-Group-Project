@@ -2,7 +2,7 @@
 -- Create the database --
 -- ------------------- --
 CREATE DATABASE IF NOT EXISTS `hospital_db`;
-USE `hospital_db`
+USE `hospital_db`;
 
 
 
@@ -11,7 +11,7 @@ USE `hospital_db`
 -- ---------- --
 -- Role Setup --
 -- ---------- --
-CREATE ROLE IF NOT EXISTS `hospital_webapp_role`;
+CREATE ROLE `hospital_webapp_role`;
 
 GRANT
     SELECT, INSERT, UPDATE, DELETE
@@ -68,8 +68,10 @@ CREATE TABLE IF NOT EXISTS `hospital_db`.`asset`(
 	`name` VARCHAR(100) NOT NULL,
 	`type` VARCHAR(15) NOT NULL, -- TODO: Figure out constraints, possibly use ENUM type
 	`location` VARCHAR(100) NOT NULL,
-	`count` INT NOT NULL DEFAULT 0,
-	`max_count` INT DEFAULT 1
+	`count` INT NOT NULL DEFAULT 0 CHECK (`count`>=0),
+	`max_count` INT DEFAULT 1,
+	CONSTRAINT chk_asset_count CHECK
+		((`max_count` IS NULL) OR (`count`<=`max_count`))
 );
 
 CREATE TABLE IF NOT EXISTS `hospital_db`.`asset_assignment`(
@@ -318,7 +320,7 @@ BEGIN
 END$$
 DELIMITER ;
 
--- TODO: authenticate user token
+-- authenticate user token
 DELIMITER $$
 CREATE PROCEDURE `hospital_db`.AuthenticateToken(
 	IN p_Username VARCHAR(15),
@@ -345,7 +347,325 @@ BEGIN
 END$$
 DELIMITER ;
 
--- TODO: create stay
+-- remove expired tokens
+DELIMITER $$
+CREATE PROCEDURE `hospital_db`.ExpireTokens()
+BEGIN
+	DELETE
+		FROM `hospital_db`.`login_tokens`
+		WHERE `expires` < NOW();
+END$$
+DELIMITER ;
+
+-- create patient
+DELIMITER $$
+CREATE PROCEDURE `hospital_db`.CreatePatient(
+	p_user_id INT,
+	p_f_name VARCHAR(75),
+	p_m_name VARCHAR(75),
+	p_l_name VARCHAR(75)
+)
+BEGIN
+	INSERT INTO `hospital_db`.`patient`
+		(user_id, f_name, l_name, m_name)
+	VALUES
+		(
+			p_user_id,
+			p_f_name,
+			p_l_name,
+			p_m_name
+		);
+
+	SELECT LAST_INSERT_ID() AS `patient_id`;
+END$$
+DELIMITER ;
+
+
+-- create staff
+DELIMITER $$
+CREATE PROCEDURE `hospital_db`.CreateStaff(
+	p_creator_user_id INT,
+	p_user_id INT,
+	p_f_name VARCHAR(75),
+	p_m_name VARCHAR(75),
+	p_l_name VARCHAR(75)
+)
+BEGIN
+	IF (SELECT COUNT(*)
+			FROM `hospital_db`.`group_entry`
+			WHERE (
+				`user_id` = p_creator_user_id
+			AND `group_id` = 
+				(SELECT `group_id`
+					FROM `hospital_db`.`group`
+					WHERE `name_id` = "main_admin"
+				)
+			)
+		) < 1
+	THEN
+		SIGNAL SQLSTATE '45000'
+		SET MESSAGE_TEXT = "Permission error.";
+	END IF;
+
+	INSERT INTO `hospital_db`.`staff`
+		(user_id, f_name, l_name, m_name)
+	VALUES
+		(
+			p_user_id,
+			p_f_name,
+			p_l_name,
+			p_m_name
+		);
+
+	SELECT LAST_INSERT_ID() AS `staff_id`;
+END$$
+DELIMITER ;
+
+-- TODO: search patient
+
+
+-- add to front desk group
+DELIMITER $$
+CREATE PROCEDURE `hospital_db`.AddFrontDeskGroup(
+	p_creator_user_id INT,
+	p_user_id INT
+)
+BEGIN
+	-- Ensure permissions
+	IF (SELECT COUNT(*)
+			FROM `hospital_db`.`group_entry`
+			WHERE (
+				`user_id` = p_creator_user_id
+			AND `group_id` = 
+				(SELECT `group_id`
+					FROM `hospital_db`.`group`
+					WHERE `name_id` = "main_admin"
+				)
+			)
+		) < 1
+	THEN
+		SIGNAL SQLSTATE '45000'
+		SET MESSAGE_TEXT = "Permission error.";
+	END IF;
+
+	INSERT INTO `hospital_db`.`group_entry`
+		(`user_id`, `group_id`)
+	VALUES(
+		p_user_id,
+		(SELECT `group_id`
+			FROM `hospital_db`.`group`
+			WHERE `name_id` = "main_front")
+	);
+END$$
+DELIMITER ;
+
+-- add to admin group
+DELIMITER $$
+CREATE PROCEDURE `hospital_db`.AddAdminGroup(
+	p_creator_user_id INT,
+	p_user_id INT
+)
+BEGIN
+	-- Ensure permissions
+	IF (SELECT COUNT(*)
+			FROM `hospital_db`.`group_entry`
+			WHERE (
+				`user_id` = p_creator_user_id
+			AND `group_id` = 
+				(SELECT `group_id`
+					FROM `hospital_db`.`group`
+					WHERE `name_id` = "main_admin"
+				)
+			)
+		) < 1
+	THEN
+		SIGNAL SQLSTATE '45000'
+		SET MESSAGE_TEXT = "Permission error.";
+	END IF;
+
+	INSERT INTO `hospital_db`.`group_entry`
+		(`user_id`, `group_id`)
+	VALUES(
+		p_user_id,
+		(SELECT `group_id`
+			FROM `hospital_db`.`group`
+			WHERE `name_id` = "main_admin")
+	);
+END$$
+DELIMITER ;
+
+
+-- add to asset group
+DELIMITER $$
+CREATE PROCEDURE `hospital_db`.AddAssetGroup(
+	p_creator_user_id INT,
+	p_user_id INT
+)
+BEGIN
+	-- Ensure permissions
+	IF (SELECT COUNT(*)
+			FROM `hospital_db`.`group_entry`
+			WHERE (
+				`user_id` = p_creator_user_id
+			AND `group_id` = 
+				(SELECT `group_id`
+					FROM `hospital_db`.`group`
+					WHERE `name_id` = "main_admin"
+				)
+			)
+		) < 1
+	THEN
+		SIGNAL SQLSTATE '45000'
+		SET MESSAGE_TEXT = "Permission error.";
+	END IF;
+
+	INSERT INTO `hospital_db`.`group_entry`
+		(`user_id`, `group_id`)
+	VALUES(
+		p_user_id,
+		(SELECT `group_id`
+			FROM `hospital_db`.`group`
+			WHERE `name_id` = "main_asset")
+	);
+END$$
+DELIMITER ;
+
+
+-- add to pharm tech group
+DELIMITER $$
+CREATE PROCEDURE `hospital_db`.AddPharmTechGroup(
+	p_creator_user_id INT,
+	p_user_id INT
+)
+BEGIN
+	-- Ensure permissions
+	IF (SELECT COUNT(*)
+			FROM `hospital_db`.`group_entry`
+			WHERE (
+				`user_id` = p_creator_user_id
+			AND `group_id` = 
+				(SELECT `group_id`
+					FROM `hospital_db`.`group`
+					WHERE `name_id` = "main_admin"
+				)
+			)
+		) < 1
+	THEN
+		SIGNAL SQLSTATE '45000'
+		SET MESSAGE_TEXT = "Permission error.";
+	END IF;
+
+	INSERT INTO `hospital_db`.`group_entry`
+		(`user_id`, `group_id`)
+	VALUES(
+		p_user_id,
+		(SELECT `group_id`
+			FROM `hospital_db`.`group`
+			WHERE `name_id` = "main_pharmtech")
+	);
+END$$
+DELIMITER ;
+
+
+
+-- enroll patient
+DELIMITER $$
+CREATE PROCEDURE `hospital_db`.EnrollPatient(
+	p_creator_user_id INT,
+	p_patient_id INT,
+	p_staff_id INT,
+	p_bed_id INT
+)
+BEGIN
+	-- Ensure permissions
+	IF (SELECT COUNT(*)
+			FROM `hospital_db`.`group_entry`
+			WHERE (
+				`user_id` = p_creator_user_id
+			AND `group_id` = 
+				(SELECT `group_id`
+					FROM `hospital_db`.`group`
+					WHERE `name_id` = "main_front"
+				)
+			)
+		) < 1
+	THEN
+		SIGNAL SQLSTATE '45000'
+		SET MESSAGE_TEXT = "Permission error.";
+	END IF;
+
+
+	START TRANSACTION;
+
+	-- Use up the bed
+	UPDATE `hospital_db`.`asset` AS asset
+		SET asset.`count` = (SELECT asset.`count`) - 1
+		WHERE `asset_id` = p_bed_id;
+	
+
+	-- Create a stay
+	INSERT INTO `hospital_db`.`stay`
+		(`patient_id`, `checkin_time`, `primary_staff`, `bed_id`)
+	VALUES
+		(p_patient_id, NOW(), p_staff_id, p_bed_id);
+
+	COMMIT;
+END$$
+DELIMITER ;
+
+-- checkout patient
+DELIMITER $$
+CREATE PROCEDURE `hospital_db`.CheckoutPatient(
+	p_creator_user_id INT,
+	p_stay_id INT
+)
+BEGIN
+	-- Ensure permissions
+	IF (SELECT COUNT(*)
+			FROM `hospital_db`.`group_entry`
+			WHERE (
+				`user_id` = p_creator_user_id
+			AND `group_id` = 
+				(SELECT `group_id`
+					FROM `hospital_db`.`group`
+					WHERE `name_id` = "main_front"
+				)
+			)
+		) < 1
+	THEN
+		SIGNAL SQLSTATE '45000'
+		SET MESSAGE_TEXT = "Permission error.";
+	END IF;
+
+	IF (SELECT `checkout_time`
+			FROM `hospital_db`.`stay`
+			WHERE `stay_id` = p_stay_id
+		) IS NOT NULL
+	THEN
+		SIGNAL SQLSTATE '45000'
+		SET MESSAGE_TEXT = "Already checked out.";
+	END IF;
+
+	-- Free up the bed
+	UPDATE `hospital_db`.`asset` AS asset
+		SET asset.`count` = (SELECT asset.`count`) + 1
+		WHERE `asset_id` = (
+			SELECT `bed_id`
+				FROM `hospital_db`.`stay`
+				WHERE `stay_id` = p_stay_id
+			);
+	
+
+	UPDATE `hospital_db`.`stay`
+		SET `checkout_time` = NOW()
+		WHERE `stay_id` = p_stay_id;
+	
+	COMMIT;
+END$$
+DELIMITER ;
+
+
+
 -- TODO: add patient contact
 -- TODO: remove patient contact
 -- TODO: get stay
@@ -354,19 +674,53 @@ DELIMITER ;
 -- TODO: get staff assignments
 -- TODO: assign staff to stay
 -- TODO: remove staff to stay
--- TODO: assign room
+-- TODO: assign bed
 -- TODO: add symptom
 -- TODO: edit symptom
 -- TODO: add medical history
 
+-- Add a bed
+DELIMITER $$
+CREATE PROCEDURE `hospital_db`.AddBed(
+	p_staff_id INT,
+	p_bed_name VARCHAR(100),
+	p_location VARCHAR(100)
+)
+BEGIN
+	IF (SELECT COUNT(*)
+			FROM `hospital_db`.`group_entry`
+			WHERE (
+				`user_id` = p_staff_id
+			AND `group_id` = 
+				(SELECT `group_id`
+					FROM `hospital_db`.`group`
+					WHERE `name_id` = "main_admin"
+				)
+			)
+		) < 1
+	THEN
+		SIGNAL SQLSTATE '45000'
+		SET MESSAGE_TEXT = "Permission error.";
+	END IF;
+
+	INSERT INTO `hospital_db`.`asset`
+		(`name`, `type`, `location`, `count`, `max_count`)
+	VALUES
+		(
+			p_bed_name,
+			"bed",
+			p_location,
+			1, 1
+		);
+END$$
+DELIMITER ;
+-- TODO: List bed
 
 
 
 -- ----------------------- --
 -- Make some default items --
 -- ----------------------- --
--- Create admin user
-CALL CreateUser('admin', 'password');
 -- Create admin group
 INSERT INTO `hospital_db`.`group`
 	(`name_id`) VALUES ("main_admin");
@@ -379,3 +733,15 @@ INSERT INTO `hospital_db`.`group`
 -- Create pharm tech group
 INSERT INTO `hospital_db`.`group`
 	(`name_id`) VALUES ("main_pharmtech");
+
+-- Create admin user
+CALL `hospital_db`.CreateUser('admin', 'password');
+-- Add the admin user to the admin group
+INSERT INTO `hospital_db`.`group_entry`
+	(`user_id`, `group_id`)
+VALUES(
+	LAST_INSERT_ID(),
+    (SELECT `group_id`
+		FROM `hospital_db`.`group`
+		WHERE `name_id` = "main_admin")
+);
