@@ -799,6 +799,20 @@ BEGIN
 		);
 END$$
 DELIMITER ;
+
+-- Get a user id from a name
+DELIMITER $$
+CREATE PROCEDURE `hospital_db`.GetUserId(
+	p_name VARCHAR(75)
+)
+BEGIN
+	SELECT `user_id`
+		FROM `hospital_db`.`user`
+		WHERE `username` = p_name;
+END$$
+DELIMITER ;
+
+
 -- TODO: List bed
 
 
