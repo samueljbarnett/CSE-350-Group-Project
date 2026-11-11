@@ -400,6 +400,29 @@ app.get("/dashboard.html", async (req,res)=>{
     }
 })
 
+
+app.get("/staff-manager.html", async (req,res)=>{
+    const auth = await checkLogin(req)
+
+    // Ensure the user is logged in
+    if(!auth){
+        res.redirect('login.html?redirect=%2Fstaff-manager.html')
+        return
+    }
+
+    // Get information about the logged in user
+    const inAdminGroup = await SQLCall("CALL InAdminGroup(?)", [auth.id])
+    // console.log(inAdminGroup[0].granted)
+
+    if(!inAdminGroup[0].granted) {
+        res.redirect("/bad-permissions.html")
+        return
+    }
+
+    res.writeHead(200, {"content-type":"text/html"})
+    res.end(render("staff-manager.html", req, auth))
+})
+
 // Create a connection to the database
 console.log("Connecting to database...")
 mysqlx.getSession(sql_config).then(async (conn)=>{
