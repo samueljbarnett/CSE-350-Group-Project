@@ -4,8 +4,8 @@ const sql_config = {
     "host":"172.17.0.2",
     "port":33060,
     "user": "hospital_webapp",
-    "password":"D&j[%pDse6LN&B4Br:G;",
-    // "schema": "hospital_db",
+    "password":"q>}0)k%guOJaVw<rNNOo",
+    "schema": "hospital_db",
 };
 
 let mysql_conn
@@ -139,6 +139,78 @@ app.post('/api/auth', async (req, res) =>{
     }
 })
 
+// Authentication api endpoint
+app.post('/api/create_user', multipartMiddleware);
+app.post('/api/create_user', async (req, res) =>{
+    // Validate form inputs
+    if(!req.body){
+        res.end("No arguments supplied")
+        return
+    }
+    if(!req.body.user){
+        res.end("No user supplied")
+        return
+    }
+    if(!req.body.pass){
+        res.end("No password supplied")
+        return
+    }
+
+    const textDecoder = new TextDecoder()
+    let redirect = "%2F"
+    if(req.body.redirect){
+        redirect = textDecoder.decode(req.body.redirect.data)
+        if(redirect == ""){redirect = "%2F"}
+    }
+    const user = textDecoder.decode(req.body.user.data)
+    const pass = textDecoder.decode(req.body.pass.data)
+    
+    let ret
+
+    try {
+        // Create a prepared query
+        ret = await mysql_conn.sql("CALL `hospital_db`.CreateUser(?, ?)")
+            .bind(
+                user,
+                pass
+            ).execute()
+    } catch (error) {
+        res.redirect("/badcreateaccount.html")
+        return
+    }
+
+    
+    try {
+        // Create a prepared query
+        const ret = await mysql_conn.sql("CALL `hospital_db`.MakeAuthToken(?, ?)")
+            .bind(
+                user,
+                pass
+            ).execute()
+    
+        // Get the returned rows
+        const rows = ret.fetchAll()
+        
+        // Do thing with rows
+        if(rows[0][0] != null){
+            // Successful authentication
+            res.cookie("login_token", JSON.stringify({
+                "value":rows[0][0],
+                "user":user
+            }))
+            res.redirect("/newaccount.html")
+
+        }else{
+            // Failed authentication
+            res.redirect(`/badlogin.html?redirect=%2Fnewaccount.html`)
+        }
+        
+    } catch (error) {
+        console.error(error)
+        res.status(500)
+        res.end("500 - Internal server error");
+    }
+})
 
 
 // Create a connection to the database

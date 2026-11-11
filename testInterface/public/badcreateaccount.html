@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hospital Account Creation</title>
+</head>
+<body>
+    <p>Failed to create user account. The user likely already exists.</p>
+    <form enctype="multipart/form-data" method="post" action="/api/create_user">
+        <label for="user">Username:</label>
+        <input name="user" id="user">
+        <label for="user">Password:</label>
+        <input name="pass" id="pass">
+        <button type="submit">Submit</button>
+    </form>
+</body>
+</html>
