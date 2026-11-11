@@ -14,6 +14,7 @@ let mysql_conn
 // Express configuration
 const express = require('express');
 const { multipartMiddleware } = require('./multipart');
+const { render } = require('./template');
 const app = express()
 const port = 3000
 
@@ -44,6 +45,38 @@ app.use(express.static('public'));
 
 
 
+function objectifySQLResponse(ret){
+    const columns = ret.getColumns()
+    const rows = ret.fetchAll()
+    const columnNames = []
+    const new_rows = []
+
+    for(let c=0;c<columns.length;c++){
+        columnNames.push(columns[c].getColumnLabel())
+    }
+
+    for(let r=0;r<rows.length;r++){
+        const obj={}
+
+        for(let c=0;c<rows[r].length;c++){
+            obj[columnNames[c]] = rows[r][c]
+        }
+
+        new_rows.push(obj)
+    }
+
+    return new_rows
+}
+async function SQLCall(call, values){
+    let ret
+    try {
+        ret = await mysql_conn.sql(call)
+            .bind(values).execute()
+    } catch (error) {
+        return false
+    }
+    return objectifySQLResponse(ret)
+}
 
 async function checkLogin(req){
     if(!req.cookies.login_token){ return false }
@@ -71,12 +104,15 @@ async function checkLogin(req){
         return false
     }
 
-    const rows = ret.fetchAll()
-    console.log(rows)
+    const rows = objectifySQLResponse(ret)
 
-    if(rows[0][0] == "1"){
-        return true
+    if(rows[0].valid){
+        return {
+            id: rows[0].user_id,
+            name: rows[0].username
+        }
     }
+
     return false
 }
 
@@ -198,11 +234,11 @@ app.post('/api/create_user', async (req, res) =>{
                 "value":rows[0][0],
                 "user":user
             }))
-            res.redirect("/newaccount.html")
+            res.redirect("/dashboard.html")
 
         }else{
             // Failed authentication
-            res.redirect(`/badlogin.html?redirect=%2Fnewaccount.html`)
+            res.redirect(`/badlogin.html?redirect=%2Fdashboard.html`)
         }
         
     } catch (error) {
@@ -212,6 +248,33 @@ app.post('/api/create_user', async (req, res) =>{
     }
 })
 
+app.get("/dashboard.html", async (req,res)=>{
+    const auth = await checkLogin(req)
+
+    // Ensure the user is logged in
+    if(!auth){
+        res.redirect('login.html?redirect=%2Fdashboard.html')
+        return
+    }
+
+    const patient_rows = await SQLCall("SELECT * FROM `hospital_db`.`patient` WHERE `user_id` = ?", [auth.id])
+    const staff_rows = await SQLCall("SELECT * FROM `hospital_db`.`staff` WHERE `user_id` = ?", [auth.id])
+
+    let display_name=auth.name
+    
+    if(patient_rows.length!=0)
+        {display_name = patient_rows[0].f_name}
+    if(staff_rows.length!=0)
+        {display_name = staff_rows[0].f_name}
+
+    res.writeHead(200, {"content-type":"text/html"})
+    res.end(render("dashboard.html", req, {
+        "name": display_name,
+        "auth": auth,
+        "patient": patient_rows,
+        "staff": staff_rows,
+    }))
+})
 
 // Create a connection to the database
 console.log("Connecting to database...")
