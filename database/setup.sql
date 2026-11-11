@@ -571,6 +571,86 @@ BEGIN
 END$$
 DELIMITER ;
 
+-- check front desk group permissions
+DELIMITER $$
+CREATE PROCEDURE `hospital_db`.InFrontDeskGroup(
+	p_user_id INT
+)
+BEGIN
+	-- Ensure permissions
+	SELECT (COUNT(*) > 0) AS granted
+		FROM `hospital_db`.`group_entry`
+		WHERE (
+			`user_id` = p_user_id
+		AND `group_id` = 
+			(SELECT `group_id`
+				FROM `hospital_db`.`group`
+				WHERE `name_id` = "main_front"
+			)
+		);
+END$$
+DELIMITER ;
+
+-- check admin group permissions
+DELIMITER $$
+CREATE PROCEDURE `hospital_db`.InAdminGroup(
+	p_user_id INT
+)
+BEGIN
+	-- Ensure permissions
+	SELECT (COUNT(*) > 0) AS granted
+		FROM `hospital_db`.`group_entry`
+		WHERE (
+			`user_id` = p_user_id
+		AND `group_id` = 
+			(SELECT `group_id`
+				FROM `hospital_db`.`group`
+				WHERE `name_id` = "main_admin"
+			)
+		);
+END$$
+DELIMITER ;
+
+-- check asset group permissions
+DELIMITER $$
+CREATE PROCEDURE `hospital_db`.InAssetGroup(
+	p_user_id INT
+)
+BEGIN
+	-- Ensure permissions
+	SELECT (COUNT(*) > 0) AS granted
+		FROM `hospital_db`.`group_entry`
+		WHERE (
+			`user_id` = p_user_id
+		AND `group_id` = 
+			(SELECT `group_id`
+				FROM `hospital_db`.`group`
+				WHERE `name_id` = "main_asset"
+			)
+		);
+END$$
+DELIMITER ;
+
+-- check pharm tech group permissions
+DELIMITER $$
+CREATE PROCEDURE `hospital_db`.InPharmTechGroup(
+	p_user_id INT
+)
+BEGIN
+	-- Ensure permissions
+	SELECT (COUNT(*) > 0) AS granted
+		FROM `hospital_db`.`group_entry`
+		WHERE (
+			`user_id` = p_user_id
+		AND `group_id` = 
+			(SELECT `group_id`
+				FROM `hospital_db`.`group`
+				WHERE `name_id` = "main_pharmtech"
+			)
+		);
+END$$
+DELIMITER ;
+
 
 
 -- enroll patient
@@ -749,4 +829,11 @@ VALUES(
     (SELECT `group_id`
 		FROM `hospital_db`.`group`
 		WHERE `name_id` = "main_admin")
+);
+CALL `hospital_db`.CreateStaff(
+	(SELECT `user_id` FROM `hospital_db`.`user` WHERE `username` = "admin"),
+	(SELECT `user_id` FROM `hospital_db`.`user` WHERE `username` = "admin"),
+	'admin',
+	'admin',
+	'admin'
 );
