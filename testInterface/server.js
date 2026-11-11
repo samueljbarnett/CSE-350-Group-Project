@@ -412,7 +412,6 @@ app.get("/staff-manager.html", async (req,res)=>{
 
     // Get information about the logged in user
     const inAdminGroup = await SQLCall("CALL InAdminGroup(?)", [auth.id])
-    // console.log(inAdminGroup[0].granted)
 
     if(!inAdminGroup[0].granted) {
         res.redirect("/bad-permissions.html")
@@ -421,6 +420,77 @@ app.get("/staff-manager.html", async (req,res)=>{
 
     res.writeHead(200, {"content-type":"text/html"})
     res.end(render("staff-manager.html", req, auth))
+})
+
+app.post("/api/add_staff_member", async (req,res)=>{
+    const auth = await checkLogin(req)
+
+    // Ensure the user is logged in
+    if(!auth){
+        res.writeHead(403, {"content-type":"text/plain"})
+        res.end('401 - Unauthorized')
+        return
+    }
+
+    // Get information about the logged in user
+    const inAdminGroup = await SQLCall("CALL InAdminGroup(?)", [auth.id])
+
+    if(!inAdminGroup[0].granted) {
+        res.writeHead(403, {"content-type":"text/plain"})
+        res.end('403 - Forbidden')
+        return
+    }
+
+    if(!req.query.id){
+        res.writeHead(400, {"content-type":"text/plain"})
+        res.end('400 - Missing ID')
+        return
+    }
+    if(!req.query.f_name){
+        res.writeHead(400, {"content-type":"text/plain"})
+        res.end('400 - Missing first name')
+        return
+    }
+    if(!req.query.m_name){
+        res.writeHead(400, {"content-type":"text/plain"})
+        res.end('400 - Missing middle name')
+        return
+    }
+    if(!req.query.l_name){
+        res.writeHead(400, {"content-type":"text/plain"})
+        res.end('400 - Missing last name')
+        return
+    }
+
+    const id = await SQLCall("CALL `hospital_db`.GetUserId(?);",[req.query.id])
+    
+    if(id[0] == undefined){
+        res.writeHead(400, {"content-type":"text/plain"})
+        res.end('400 - Invalid ID')
+        return
+    }
+
+    const ret = await SQLCall("CALL `hospital_db`.CreateStaff(?, ?, ?, ?, ?);",[
+        auth.id,
+        id[0].user_id,
+        req.query.f_name,
+        req.query.m_name,
+        req.query.l_name
+    ])
+
+    if(ret == false){
+        res.writeHead(400, {"content-type":"text/plain"})
+        res.end('400 - Staff already exists')
+        return
+    }
+
+    try{
+        res.writeHead(200, {"content-type":"application/json"})
+        res.end(JSON.stringify(ret[0]))
+    }catch{
+        res.writeHead(500, {"content-type":"text/plain"})
+        res.end('500 - Internal Error')
+    }
 })
 
 // Create a connection to the database

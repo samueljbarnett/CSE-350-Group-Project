@@ -6,6 +6,68 @@
     <title>Staff Manager</title>
 </head>
 <body>
-    
+    <button onclick="loadStaffList">Refresh Staff List</button>
+    <ul id="staff-list"></ul>
+
+    <hr>
+    <div>
+        <label for="new-user-id">New staff user id</label>
+        <input name="new-user-id" id="new-user-id">
+        
+        <label for="new-user-f-name">First Name</label>
+        <input name="new-user-f-name" id="new-user-f-name">
+        
+        <label for="new-user-m-name">Middle Name</label>
+        <input name="new-user-m-name" id="new-user-m-name">
+        
+        <label for="new-user-l-name">Last Name</label>
+        <input name="new-user-l-name" id="new-user-l-name">
+        
+        <button onclick="addStaffMember()">Add staff member</button>
+
+        <pre id="new-user-output"></pre>
+    </div>
 </body>
+<script>
+    const staff_list = document.getElementById("staff-list")
+
+    const new_user_id_input = document.getElementById("new-user-id")
+    const new_user_f_name_input = document.getElementById("new-user-f-name")
+    const new_user_m_name_input = document.getElementById("new-user-m-name")
+    const new_user_l_name_input = document.getElementById("new-user-l-name")
+    const new_user_output = document.getElementById("new-user-output")
+
+    function populateStaffList(){
+
+    }
+
+    function loadStaffList(){
+        const req = new XMLHttpRequest()
+    }
+
+    function addedStaffMember(req){
+        if(this.status == 200){
+            loadStaffList()
+            new_user_output.textContent = "Added user to staff."
+            return
+        }
+
+        new_user_output.textContent = this.responseText
+    }
+
+    function addStaffMember(){
+        const req = new XMLHttpRequest()
+        req.onload = addedStaffMember
+        const url = `/api/add_staff_member?id=${
+            encodeURIComponent(new_user_id_input.value)}&f_name=${
+            encodeURIComponent(new_user_f_name_input.value)}&m_name=${
+            encodeURIComponent(new_user_m_name_input.value)}&l_name=${
+            encodeURIComponent(new_user_l_name_input.value)}`
+
+        req.open("POST", url)
+        req.send()
+    }
+
+    loadStaffList()
+</script>
 </html>
