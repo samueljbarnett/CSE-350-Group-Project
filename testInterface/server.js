@@ -292,27 +292,58 @@ app.get("/dashboard.html", async (req,res)=>{
         return
     }
 
+    // Get information about the logged in user
     const patient_rows = await SQLCall("SELECT * FROM `hospital_db`.`patient` WHERE `user_id` = ?", [auth.id])
     const staff_rows = await SQLCall("SELECT * FROM `hospital_db`.`staff` WHERE `user_id` = ?", [auth.id])
 
-    let display_name=auth.name
+    // Get the view requested by the user
+    let req_view = req.query.view
 
-    if(patient_rows.length!=0)
-        {display_name = patient_rows[0].f_name}
-
-    if(staff_rows.length!=0){
-        display_name = staff_rows[0].f_name
+    // Use default view if view outside of allowed values
+    if(!(["patient", "staff"].includes(req_view))){
+        if(staff_rows.length!=0 ){
+            req_view = "staff"
+        }else{
+            req_view = "patient"
+        }
     }
 
-    console.log(req.query)
+    // If the user does not have permission to the view, select patient
+    if(staff_rows.length==0){
+        req_view = "patient"
+    }
 
+    // Setup the display name
+    let display_name=auth.name
+    if(staff_rows.length!=0 && req_view=="staff"){
+        display_name = staff_rows[0].f_name
+    }
+    if(patient_rows.length!=0 && req_view=="patient"){
+        display_name = patient_rows[0].f_name
+    }
+
+    // Render and send a response
     res.writeHead(200, {"content-type":"text/html"})
-    res.end(render("dashboard.html", req, {
-        "name": display_name,
-        "auth": auth,
-        "patient": patient_rows,
-        "staff": staff_rows,
-    }))
+    switch(req_view){
+        case "patient":
+            res.end(render("patient-dashboard.html", req, {
+                "name": display_name,
+                "auth": auth,
+                "patient": patient_rows,
+                "staff": staff_rows,
+                "view": req_view
+            }))
+            break
+        case "staff":
+            res.end(render("staff-dashboard.html", req, {
+                "name": display_name,
+                "auth": auth,
+                "patient": patient_rows,
+                "staff": staff_rows,
+                "view": req_view
+            }))
+            break
+    }
 })
 
 // Create a connection to the database
