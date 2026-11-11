@@ -125,6 +125,7 @@ CREATE TABLE IF NOT EXISTS `hospital_db`.`staff`(
 	`l_name` VARCHAR(75) NOT NULL,
 	`m_name` VARCHAR(75) NOT NULL,
 	`active` BOOL DEFAULT TRUE NOT NULL,
+	UNIQUE INDEX `staff_userid_index` (`user_id` asc) VISIBLE,
 	FOREIGN KEY (`user_id`) REFERENCES `hospital_db`.`user`(`user_id`) ON DELETE RESTRICT
 );
 
@@ -134,6 +135,7 @@ CREATE TABLE IF NOT EXISTS `hospital_db`.`patient`(
 	`f_name` VARCHAR(75) NOT NULL,
 	`l_name` VARCHAR(75) NOT NULL,
 	`m_name` VARCHAR(75) NOT NULL,
+	UNIQUE INDEX `patient_userid_index` (`user_id` asc) VISIBLE,
 	FOREIGN KEY (`user_id`) REFERENCES `hospital_db`.`user`(`user_id`) ON DELETE RESTRICT
 );
 
@@ -336,7 +338,10 @@ BEGIN
 		FROM `hospital_db`.`user`
 		WHERE `username` = p_Username;
 
-	SELECT COUNT(*) > 0 AS valid
+	SELECT
+			COUNT(*) > 0 AS valid,
+			p_user_id AS user_id,
+			p_Username AS username
 		FROM `hospital_db`.`login_tokens`
 		WHERE (
 			`user_id` = p_user_id
