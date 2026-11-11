@@ -283,6 +283,60 @@ app.post('/api/create_user', async (req, res) =>{
     }
 })
 
+// Patient registration api endpoint
+app.post('/api/patient_register', multipartMiddleware);
+app.post('/api/patient_register', async (req, res) =>{
+    // Ensure the user is logged in
+    const auth = await checkLogin(req)
+    if(!auth){
+        res.redirect('login.html?redirect=%2Fpatient_registration.html')
+        return
+    }
+
+    // Validate form inputs
+    if(!req.body){
+        res.end("No arguments supplied")
+        return
+    }
+    if(!req.body.f_name){
+        res.end("No f_name supplied")
+        return
+    }
+    if(!req.body.m_name){
+        res.end("No m_name supplied")
+        return
+    }
+    if(!req.body.l_name){
+        res.end("No l_name supplied")
+        return
+    }
+
+    const textDecoder = new TextDecoder()
+    
+    const f_name = textDecoder.decode(req.body.f_name.data)
+    const m_name = textDecoder.decode(req.body.m_name.data)
+    const l_name = textDecoder.decode(req.body.l_name.data)
+    
+    let ret
+
+    try {
+        // Create a prepared query
+        ret = await mysql_conn.sql("CALL `hospital_db`.CreatePatient(?, ?, ?, ?)")
+            .bind(
+                auth.id,
+                f_name,
+                m_name,
+                l_name
+            ).execute()
+    } catch (error) {
+        // Assuming the only failure is when the patient already exists, or
+        // isn't logged in, we don't really have to do anything.
+    }
+    
+    res.redirect("/dashboard.html?view=patient")
+})
+
+
 app.get("/dashboard.html", async (req,res)=>{
     const auth = await checkLogin(req)
 
