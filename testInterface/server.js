@@ -39,7 +39,11 @@ const app = express()
 const port = 3000
 let server
 
-// Parse cookies on all paths
+
+// Serve files directly from the public directory
+app.use(express.static('public'));
+
+// Parse cookies on the rest of the paths
 app.use((req, res, next)=>{
     if(!req.headers.cookie){
         req.cookies = {}
@@ -61,9 +65,19 @@ app.use((req, res, next)=>{
     next()
 })
 
-// Serve files directly from the public directory
-app.use(express.static('public'));
+// Parse the query string
+app.set("query parser", (str)=>{
+    if(typeof str != "string"){return {}}
 
+    const params = new URLSearchParams(str)
+    const obj = {}
+
+    for (const [key, value] of params) {
+        obj[key] = value
+    }
+
+    return obj
+})
 
 
 function objectifySQLResponse(ret){
@@ -285,8 +299,12 @@ app.get("/dashboard.html", async (req,res)=>{
 
     if(patient_rows.length!=0)
         {display_name = patient_rows[0].f_name}
-    if(staff_rows.length!=0)
-        {display_name = staff_rows[0].f_name}
+
+    if(staff_rows.length!=0){
+        display_name = staff_rows[0].f_name
+    }
+
+    console.log(req.query)
 
     res.writeHead(200, {"content-type":"text/html"})
     res.end(render("dashboard.html", req, {
