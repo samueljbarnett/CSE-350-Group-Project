@@ -10,13 +10,13 @@ const sql_config = {
 
 let mysql_conn
 
-
 // Express configuration
 const express = require('express');
 const { multipartMiddleware } = require('./multipart');
 const { render } = require('./template');
 const app = express()
 const port = 3000
+let server
 
 // Parse cookies on all paths
 app.use((req, res, next)=>{
@@ -261,7 +261,7 @@ app.get("/dashboard.html", async (req,res)=>{
     const staff_rows = await SQLCall("SELECT * FROM `hospital_db`.`staff` WHERE `user_id` = ?", [auth.id])
 
     let display_name=auth.name
-    
+
     if(patient_rows.length!=0)
         {display_name = patient_rows[0].f_name}
     if(staff_rows.length!=0)
@@ -286,9 +286,16 @@ mysqlx.getSession(sql_config).then(async (conn)=>{
     await mysql_conn.sql("set role `hospital_webapp_role`;").execute()
     
     // Start listening
-    app.listen(port, () => {
+    server = app.listen(port, () => {
         console.log(`Example app listening on port ${port}`)
     })
 }, (err)=>{
     console.log("Failed to establish connection to the database.", err)
 })
+
+process.on('SIGTERM', () => {
+    debug('SIGTERM signal received: closing HTTP server');
+    server.close(() => {
+          debug('HTTP server closed');
+    });
+});
