@@ -902,7 +902,7 @@ BEGIN
 			FROM `hospital_db`.`group_entry`
 			WHERE (
 				`user_id` = p_staff_id
-			AND `group_id` = 
+			AND `group_id` IN 
 				(SELECT `group_id`
 					FROM `hospital_db`.`group`
 					WHERE `name_id` = "main_admin" OR `name_id` = "main_asset"
@@ -938,18 +938,6 @@ BEGIN
 END$$
 DELIMITER ;
 
-
--- Get a user id from a name
-DELIMITER $$
-CREATE PROCEDURE `hospital_db`.GetUserId(
-	p_name VARCHAR(75)
-)
-BEGIN
-	SELECT `user_id`
-		FROM `hospital_db`.`user`
-		WHERE `username` = p_name;
-END$$
-DELIMITER ;
 
 -- Get information about all staff members
 DELIMITER $$
