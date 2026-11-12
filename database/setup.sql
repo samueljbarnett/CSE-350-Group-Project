@@ -1005,6 +1005,34 @@ END$$
 DELIMITER ;
 
 
+-- Get information about all assets
+DELIMITER $$
+CREATE PROCEDURE `hospital_db`.ReadAssets(
+	p_user_id int
+)
+BEGIN
+	-- Ensure permissions
+	IF (SELECT COUNT(*)
+			FROM `hospital_db`.`group_entry`
+			WHERE (
+				`user_id` = p_user_id
+			AND `group_id` = 
+				(SELECT `group_id`
+					FROM `hospital_db`.`group`
+					WHERE `name_id` = "main_asset"
+				)
+			)
+		) < 1
+	THEN
+		SIGNAL SQLSTATE '45000'
+		SET MESSAGE_TEXT = "Permission error.";
+	END IF;
+
+	SELECT *
+		FROM `hospital_db`.`asset`;
+END$$
+DELIMITER ;
+
 -- TODO: add patient contact
 -- TODO: remove patient contact
 -- TODO: get stay
