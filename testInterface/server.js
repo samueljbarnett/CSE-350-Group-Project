@@ -493,6 +493,35 @@ app.post("/api/add_staff_member", async (req,res)=>{
     }
 })
 
+
+app.get("/api/read_staff_members", async (req,res)=>{
+    const auth = await checkLogin(req)
+
+    // Ensure the user is logged in
+    if(!auth){
+        res.writeHead(403, {"content-type":"text/plain"})
+        res.end('401 - Unauthorized')
+        return
+    }
+
+    const ret = await SQLCall("CALL `hospital_db`.ReadStaffMembers(?);", [auth.id])
+
+    if(!ret) {
+        res.writeHead(403, {"content-type":"text/plain"})
+        res.end('403 - Forbidden')
+        return
+    }
+
+    try{
+        res.writeHead(200, {"content-type":"application/json"})
+        res.end(JSON.stringify(ret))
+    }catch{
+        res.writeHead(500, {"content-type":"text/plain"})
+        res.end('500 - Internal Error')
+    }
+})
+
+
 // Create a connection to the database
 console.log("Connecting to database...")
 mysqlx.getSession(sql_config).then(async (conn)=>{
