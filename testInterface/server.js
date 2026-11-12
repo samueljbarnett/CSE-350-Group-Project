@@ -401,6 +401,28 @@ app.get("/dashboard.html", async (req,res)=>{
 })
 
 
+app.get("/asset-manager.html", async (req,res)=>{
+    const auth = await checkLogin(req)
+
+    // Ensure the user is logged in
+    if(!auth){
+        res.redirect('login.html?redirect=%2Fstaff-manager.html')
+        return
+    }
+
+    // Get information about the logged in user
+    const inAssetGroup = await SQLCall("CALL InAssetGroup(?)", [auth.id])
+    
+    if(!inAssetGroup[0].granted) {
+        res.redirect("/bad-permissions.html")
+        return
+    }
+
+    res.writeHead(200, {"content-type":"text/html"})
+    res.end(render("asset-manager.html", req, auth))
+})
+
+
 app.get("/staff-manager.html", async (req,res)=>{
     const auth = await checkLogin(req)
 
@@ -520,7 +542,6 @@ app.get("/api/read_staff_members", async (req,res)=>{
         res.end('500 - Internal Error')
     }
 })
-
 app.get("/api/add_admin_group", async (req,res)=>{
     const auth = await checkLogin(req)
 
@@ -587,7 +608,6 @@ app.get("/api/remove_admin_group", async (req,res)=>{
         res.end('500 - Internal Error')
     }
 })
-
 app.get("/api/add_asset_group", async (req,res)=>{
     const auth = await checkLogin(req)
 
