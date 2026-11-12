@@ -3,10 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <meta name="theme-color" content="#f2f7f7">
+    <title>Hospital Portal</title>
+    <link rel="stylesheet" href="index.css">
 </head>
 <body>
-    <a href="login.html?redirect=%2Fdashboard.html">Login</a>
-    <a href="createaccount.html">Sign up</a>
+    <header class="site-header">
+        <a class="brand" href="/" aria-label="Hospital Portal home">
+            <span class="brand-mark" aria-hidden="true">H</span>
+            <span>Hospital Portal</span>
+        </a>
+    </header>
+
+    <main>
+        <section class="welcome" aria-labelledby="welcome-title">
+            <h1 id="welcome-title">Welcome to your care portal</h1>
+            <p class="intro">Sign in to continue to your dashboard, or create an account to get started.</p>
+            <div class="primary-actions">
+                <a class="button button-primary" href="login.html?redirect=%2Fdashboard.html">Log in to your account</a>
+                <a class="button button-secondary" href="createaccount.html">Create an account</a>
+            </div>
+        </section>
+
+        <section class="registration-card" aria-labelledby="registration-title">
+            <div class="registration-icon" aria-hidden="true">+</div>
+            <div>
+                <h2 id="registration-title">Patient registration</h2>
+                <p>Have an account? Register your patient profile to get started.</p>
+            </div>
+            <a class="registration-link" href="patient_registration.html">Go to registration <span aria-hidden="true">→</span></a>
+        </section>
+    </main>
 </body>
 </html>

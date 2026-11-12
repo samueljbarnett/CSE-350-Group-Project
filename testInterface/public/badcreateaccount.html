@@ -3,16 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#f2f7f7">
     <title>Hospital Account Creation</title>
+    <link rel="stylesheet" href="login.css">
 </head>
 <body>
-    <p>Failed to create user account. The user likely already exists.</p>
-    <form enctype="multipart/form-data" method="post" action="/api/create_user">
-        <label for="user">Username:</label>
-        <input name="user" id="user">
-        <label for="user">Password:</label>
-        <input name="pass" id="pass">
-        <button type="submit">Submit</button>
-    </form>
+    <header class="site-header">
+        <a class="brand" href="/" aria-label="Hospital Portal home">
+            <span class="brand-mark" aria-hidden="true">H</span>
+            <span>Hospital Portal</span>
+        </a>
+        <a class="home-link" href="/">Back to home</a>
+    </header>
+    <main class="login-panel">
+        <p class="form-notice" role="alert">Could not create the account. That username may already be in use. Try another one.</p>
+        <form enctype="multipart/form-data" method="post" action="/api/create_user">
+            <h1>Create your account</h1>
+            <p class="login-subtitle">Enter a username and password to get started.</p>
+            <div class="form-field">
+                <label for="user">Username</label>
+                <input name="user" id="user" autocomplete="username">
+            </div>
+            <div class="form-field">
+                <label for="pass">Password</label>
+                <input name="pass" id="pass" type="password" autocomplete="new-password">
+            </div>
+            <button class="button button-primary" type="submit">Try again</button>
+            <p class="signup-prompt">Already have an account? <a href="login.html">Log in</a></p>
+        </form>
+    </main>
 </body>
 </html>

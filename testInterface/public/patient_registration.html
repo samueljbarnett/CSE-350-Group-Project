@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#f2f7f7">
+    <title>Patient Registration</title>
+    <link rel="stylesheet" href="login.css">
+</head>
+<body>
+    <header class="site-header">
+        <a class="brand" href="/" aria-label="Hospital Portal home">
+            <span class="brand-mark" aria-hidden="true">H</span>
+            <span>Hospital Portal</span>
+        </a>
+        <a class="home-link" href="/">Back to home</a>
+    </header>
+    <main class="login-panel">
+        <form enctype="multipart/form-data" method="post" action="/api/create_patient">
+            <h1>Patient registration</h1>
+            <p class="login-subtitle">Enter the patient's name to create a patient profile.</p>
+            <div class="form-field">
+                <label for="f_name">First name</label>
+                <input name="f_name" id="f_name" autocomplete="given-name" required>
+            </div>
+            <div class="form-field">
+                <label for="m_name">Middle name</label>
+                <input name="m_name" id="m_name" autocomplete="additional-name">
+            </div>
+            <div class="form-field">
+                <label for="l_name">Last name</label>
+                <input name="l_name" id="l_name" autocomplete="family-name" required>
+            </div>
+            <button class="button button-primary" type="submit">Register patient</button>
+        </form>
+    </main>
+</body>
+</html>

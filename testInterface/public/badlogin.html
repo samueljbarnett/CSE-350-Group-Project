@@ -3,18 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#f2f7f7">
     <title>Hospital Login</title>
+    <link rel="stylesheet" href="login.css">
 </head>
 <body>
-    <p>Login attempt failed.</p>
-    <form enctype="multipart/form-data" method="post" action="/api/auth">
-        <label for="user">Username:</label>
-        <input name="user" id="user">
-        <label for="user">Password:</label>
-        <input name="pass" id="pass">
-        <input hidden name="redirect" id="redirect">
-        <button type="submit">Submit</button>
-    </form>
+    <header class="site-header">
+        <a class="brand" href="/" aria-label="Hospital Portal home">
+            <span class="brand-mark" aria-hidden="true">H</span>
+            <span>Hospital Portal</span>
+        </a>
+        <a class="home-link" href="/">Back to home</a>
+    </header>
+    <main class="login-panel">
+        <p class="form-notice" role="alert">Login failed. Check your username and password, then try again.</p>
+        <form enctype="multipart/form-data" method="post" action="/api/auth">
+            <h1>Welcome back</h1>
+            <p class="login-subtitle">Please sign in</p>
+            <div class="form-field">
+                <label for="user">Username</label>
+                <input name="user" id="user" autocomplete="username">
+            </div>
+            <div class="form-field">
+                <label for="pass">Password</label>
+                <input name="pass" id="pass" type="password" autocomplete="current-password">
+            </div>
+            <input hidden name="redirect" id="redirect">
+            <div class="login-links">
+                <a href="forgot-password.html">Forgot password?</a>
+            </div>
+            <button class="button button-primary" type="submit">Log in</button>
+            <p class="signup-prompt">New to the portal? <a href="createaccount.html">Create an account</a></p>
+        </form>
+    </main>
     <script>
         const redirectElement = document.getElementById("redirect")
         

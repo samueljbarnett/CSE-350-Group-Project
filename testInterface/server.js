@@ -248,6 +248,43 @@ app.post('/api/create_user', async (req, res) =>{
     }
 })
 
+app.post('/api/create_patient', multipartMiddleware);
+app.post('/api/create_patient', async (req, res) =>{
+    const auth = await checkLogin(req)
+
+    if(!auth){
+        res.redirect('/login.html?redirect=%2Fpatient_registration.html')
+        return
+    }
+
+    if(!req.body || !req.body.f_name || !req.body.l_name){
+        res.redirect('/patient_registration.html?error=missing-fields')
+        return
+    }
+
+    const textDecoder = new TextDecoder()
+    const fName = textDecoder.decode(req.body.f_name.data)
+    const mName = req.body.m_name ? textDecoder.decode(req.body.m_name.data) : ""
+    const lName = textDecoder.decode(req.body.l_name.data)
+
+    try {
+        const ret = await mysql_conn.sql("CALL `hospital_db`.CreatePatient(?, ?, ?, ?)")
+            .bind(auth.id, fName, mName, lName)
+            .execute()
+
+        const rows = objectifySQLResponse(ret)
+        if(rows.length > 0 && rows[0].patient_id != null){
+            res.redirect('/dashboard.html')
+            return
+        }
+
+        res.redirect('/patient_registration.html?error=unknown')
+    } catch (error) {
+        console.error(error)
+        res.redirect('/patient_registration.html?error=server')
+    }
+})
+
 app.get("/dashboard.html", async (req,res)=>{
     const auth = await checkLogin(req)
 
