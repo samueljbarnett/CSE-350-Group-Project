@@ -248,8 +248,6 @@ BEGIN
 END$$
 DELIMITER ;
 
--- TODO: add user to group
-
 -- authenticate user
 DELIMITER $$
 CREATE PROCEDURE `hospital_db`.AuthenticateUser(
@@ -425,8 +423,6 @@ BEGIN
 	SELECT LAST_INSERT_ID() AS `staff_id`;
 END$$
 DELIMITER ;
-
--- TODO: search patient
 
 
 -- add to front desk group
@@ -652,6 +648,151 @@ END$$
 DELIMITER ;
 
 
+-- remove from front desk group
+DELIMITER $$
+CREATE PROCEDURE `hospital_db`.RemoveFrontDeskGroup(
+	p_creator_user_id INT,
+	p_user_id INT
+)
+BEGIN
+	-- Ensure permissions
+	IF (SELECT COUNT(*)
+			FROM `hospital_db`.`group_entry`
+			WHERE (
+				`user_id` = p_creator_user_id
+			AND `group_id` = 
+				(SELECT `group_id`
+					FROM `hospital_db`.`group`
+					WHERE `name_id` = "main_admin"
+				)
+			)
+		) < 1
+	THEN
+		SIGNAL SQLSTATE '45000'
+		SET MESSAGE_TEXT = "Permission error.";
+	END IF;
+
+	DELETE FROM `hospital_db`.`group_entry`
+		WHERE `user_id` = p_user_id AND `group_id` =
+		(SELECT `group_id`
+			FROM `hospital_db`.`group`
+			WHERE `name_id` = "main_front")
+	;
+END$$
+DELIMITER ;
+
+-- remove from admin group
+DELIMITER $$
+CREATE PROCEDURE `hospital_db`.RemoveAdminGroup(
+	p_creator_user_id INT,
+	p_user_id INT
+)
+BEGIN
+	-- Ensure permissions
+	IF (SELECT COUNT(*)
+			FROM `hospital_db`.`group_entry`
+			WHERE (
+				`user_id` = p_creator_user_id
+			AND `group_id` = 
+				(SELECT `group_id`
+					FROM `hospital_db`.`group`
+					WHERE `name_id` = "main_admin"
+				)
+			)
+		) < 1
+	THEN
+		SIGNAL SQLSTATE '45000'
+		SET MESSAGE_TEXT = "Permission error.";
+	END IF;
+
+	-- No remove admin user
+	IF (SELECT `user_id`
+			FROM `hospital_db`.`user`
+			WHERE `username` = "admin"
+		) = p_user_id
+	THEN
+		SIGNAL SQLSTATE '45000'
+		SET MESSAGE_TEXT = "Can't remove admin.";
+	END IF;
+
+	DELETE FROM `hospital_db`.`group_entry`
+		WHERE `user_id` = p_user_id AND `group_id` =
+		(SELECT `group_id`
+			FROM `hospital_db`.`group`
+			WHERE `name_id` = "main_admin")
+	;
+END$$
+DELIMITER ;
+
+
+-- remove from asset group
+DELIMITER $$
+CREATE PROCEDURE `hospital_db`.RemoveAssetGroup(
+	p_creator_user_id INT,
+	p_user_id INT
+)
+BEGIN
+	-- Ensure permissions
+	IF (SELECT COUNT(*)
+			FROM `hospital_db`.`group_entry`
+			WHERE (
+				`user_id` = p_creator_user_id
+			AND `group_id` = 
+				(SELECT `group_id`
+					FROM `hospital_db`.`group`
+					WHERE `name_id` = "main_admin"
+				)
+			)
+		) < 1
+	THEN
+		SIGNAL SQLSTATE '45000'
+		SET MESSAGE_TEXT = "Permission error.";
+	END IF;
+
+	DELETE FROM `hospital_db`.`group_entry`
+		WHERE `user_id` = p_user_id AND `group_id` =
+		(SELECT `group_id`
+			FROM `hospital_db`.`group`
+			WHERE `name_id` = "main_asset")
+	;
+END$$
+DELIMITER ;
+
+
+-- remove from pharm tech group
+DELIMITER $$
+CREATE PROCEDURE `hospital_db`.RemovePharmTechGroup(
+	p_creator_user_id INT,
+	p_user_id INT
+)
+BEGIN
+	-- Ensure permissions
+	IF (SELECT COUNT(*)
+			FROM `hospital_db`.`group_entry`
+			WHERE (
+				`user_id` = p_creator_user_id
+			AND `group_id` = 
+				(SELECT `group_id`
+					FROM `hospital_db`.`group`
+					WHERE `name_id` = "main_admin"
+				)
+			)
+		) < 1
+	THEN
+		SIGNAL SQLSTATE '45000'
+		SET MESSAGE_TEXT = "Permission error.";
+	END IF;
+
+	DELETE FROM `hospital_db`.`group_entry`
+		WHERE `user_id` = p_user_id AND `group_id` =
+		(SELECT `group_id`
+			FROM `hospital_db`.`group`
+			WHERE `name_id` = "main_pharmtech")
+	;
+END$$
+DELIMITER ;
+
+
 
 -- enroll patient
 DELIMITER $$
@@ -742,27 +883,12 @@ BEGIN
 	
 
 	UPDATE `hospital_db`.`stay`
-		SET `checkout_time` = NOW()
+		SET `checkout_time` = NOW(), `bed_id` = NULL
 		WHERE `stay_id` = p_stay_id;
 	
 	COMMIT;
 END$$
 DELIMITER ;
-
-
-
--- TODO: add patient contact
--- TODO: remove patient contact
--- TODO: get stay
--- TODO: search user
--- TODO: search active staff
--- TODO: get staff assignments
--- TODO: assign staff to stay
--- TODO: remove staff to stay
--- TODO: assign bed
--- TODO: add symptom
--- TODO: edit symptom
--- TODO: add medical history
 
 -- Add a bed
 DELIMITER $$
@@ -779,7 +905,7 @@ BEGIN
 			AND `group_id` = 
 				(SELECT `group_id`
 					FROM `hospital_db`.`group`
-					WHERE `name_id` = "main_admin"
+					WHERE `name_id` = "main_admin" OR `name_id` = "main_asset"
 				)
 			)
 		) < 1
@@ -813,7 +939,86 @@ END$$
 DELIMITER ;
 
 
+-- Get a user id from a name
+DELIMITER $$
+CREATE PROCEDURE `hospital_db`.GetUserId(
+	p_name VARCHAR(75)
+)
+BEGIN
+	SELECT `user_id`
+		FROM `hospital_db`.`user`
+		WHERE `username` = p_name;
+END$$
+DELIMITER ;
+
+-- Get information about all staff members
+DELIMITER $$
+CREATE PROCEDURE `hospital_db`.ReadStaffMembers(
+	p_user_id int
+)
+BEGIN
+	-- Ensure permissions
+	IF (SELECT COUNT(*)
+			FROM `hospital_db`.`group_entry`
+			WHERE (
+				`user_id` = p_user_id
+			AND `group_id` = 
+				(SELECT `group_id`
+					FROM `hospital_db`.`group`
+					WHERE `name_id` = "main_admin"
+				)
+			)
+		) < 1
+	THEN
+		SIGNAL SQLSTATE '45000'
+		SET MESSAGE_TEXT = "Permission error.";
+	END IF;
+
+	SELECT 
+		`user`.`user_id` AS `user_id`,
+		`staff_id`, `username`,
+		`f_name`, `m_name`, `l_name`,
+		`staff`.`active` AS `staff_active`,
+		`user`.`active` AS `user_active`,
+		`in_admin`, `in_asset`, `in_front`, `in_pharmtech`
+		FROM `hospital_db`.`staff`
+			JOIN `hospital_db`.`user` ON `staff`.`user_id` = `user`.`user_id`
+			
+			LEFT JOIN (SELECT `user_id`, TRUE AS `in_admin`
+				FROM `hospital_db`.`group_entry`
+				JOIN `hospital_db`.`group` ON `hospital_db`.`group`.`group_id` = `hospital_db`.`group_entry`.`group_id`
+				WHERE `hospital_db`.`group`.`name_id` = "main_admin") AS `admin_table` ON `admin_table`.`user_id` = `user`.`user_id`
+			LEFT JOIN (SELECT `user_id`, TRUE AS `in_asset`
+				FROM `hospital_db`.`group_entry`
+				JOIN `hospital_db`.`group` ON `hospital_db`.`group`.`group_id` = `hospital_db`.`group_entry`.`group_id`
+				WHERE `hospital_db`.`group`.`name_id` = "main_asset") AS `asset_table` ON `asset_table`.`user_id` = `user`.`user_id`
+			LEFT JOIN (SELECT `user_id`, TRUE AS `in_front`
+				FROM `hospital_db`.`group_entry`
+				JOIN `hospital_db`.`group` ON `hospital_db`.`group`.`group_id` = `hospital_db`.`group_entry`.`group_id`
+				WHERE `hospital_db`.`group`.`name_id` = "main_front") AS `front_table` ON `front_table`.`user_id` = `user`.`user_id`
+			LEFT JOIN (SELECT `user_id`, TRUE AS `in_pharmtech`
+				FROM `hospital_db`.`group_entry`
+				JOIN `hospital_db`.`group` ON `hospital_db`.`group`.`group_id` = `hospital_db`.`group_entry`.`group_id`
+				WHERE `hospital_db`.`group`.`name_id` = "main_pharmtech") AS `pharmtech_table` ON `pharmtech_table`.`user_id` = `user`.`user_id`
+	;
+END$$
+DELIMITER ;
+
+
+-- TODO: add patient contact
+-- TODO: remove patient contact
+-- TODO: get stay
+-- TODO: search user
+-- TODO: search active staff
+-- TODO: get staff assignments
+-- TODO: assign staff to stay
+-- TODO: remove staff to stay
+-- TODO: assign bed
+-- TODO: add symptom
+-- TODO: edit symptom
+-- TODO: add medical history
 -- TODO: List bed
+-- TODO: search patient
 
 
 
