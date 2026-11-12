@@ -6,10 +6,6 @@
     <title>Staff Manager</title>
 </head>
 <body>
-    <button onclick="loadStaffList">Refresh Staff List</button>
-    <ul id="staff-list"></ul>
-
-    <hr>
     <div>
         <label for="new-user-id">New staff user id</label>
         <input name="new-user-id" id="new-user-id">
@@ -27,9 +23,36 @@
 
         <pre id="new-user-output"></pre>
     </div>
+
+
+    <hr>
+
+
+    <button onclick="loadStaffList">Refresh Staff List</button>
+    <pre id="staff-list-error-output"></pre>
+    <table id="staff-list">
+        <tr>
+            <th>User ID</th>
+            <th>Username</th>
+            <th>Last Name</th>
+            <th>First Name</th>
+            <th>Middle Name</th>
+            <th>Active</th>
+            <th>In Admin Group</th>
+            <th>In Asset Group</th>
+            <th>In Front Desk Group</th>
+            <th>In Pharmacy Tech Group</th>
+        </tr>
+    </table>
 </body>
+<style>
+table, th, td {
+  border:1px solid black;
+}
+</style>
 <script>
     const staff_list = document.getElementById("staff-list")
+    const staff_list_output = document.getElementById("staff-list-error-output")
 
     const new_user_id_input = document.getElementById("new-user-id")
     const new_user_f_name_input = document.getElementById("new-user-f-name")
@@ -37,12 +60,169 @@
     const new_user_l_name_input = document.getElementById("new-user-l-name")
     const new_user_output = document.getElementById("new-user-output")
 
+    let staff_data = []
+
+    function toggleActive(){
+        const user = staff_data[this.data_id]
+        
+        const req = new XMLHttpRequest()
+        let url=""
+        
+        if(user.staff_active)
+            {url = `api/deactivate_staff?id=${user.user_id}`}
+        else{url = `api/activate_staff?id=${user.user_id}`}
+
+        req.onload = loadStaffList
+        req.open("GET", url)
+        req.send()
+    }
+    function toggleAdmin(){
+        const user = staff_data[this.data_id]
+        
+        const req = new XMLHttpRequest()
+        let url=""
+        
+        if(user.in_admin)
+            {url = `api/remove_admin_group?id=${user.user_id}`}
+        else{url = `api/add_admin_group?id=${user.user_id}`}
+
+        req.onload = loadStaffList
+        req.open("GET", url)
+        req.send()
+    }
+    function toggleAsset(){
+        const user = staff_data[this.data_id]
+        
+        const req = new XMLHttpRequest()
+        let url=""
+        
+        if(user.in_asset)
+            {url = `api/remove_asset_group?id=${user.user_id}`}
+        else{url = `api/add_asset_group?id=${user.user_id}`}
+
+        req.onload = loadStaffList
+        req.open("GET", url)
+        req.send()
+    }
+    function toggleFront(){
+        const user = staff_data[this.data_id]
+        
+        const req = new XMLHttpRequest()
+        let url=""
+        
+        if(user.in_front)
+            {url = `api/remove_front_group?id=${user.user_id}`}
+        else{url = `api/add_front_group?id=${user.user_id}`}
+
+        req.onload = loadStaffList
+        req.open("GET", url)
+        req.send()
+    }
+    function togglePharmTech(){
+        const user = staff_data[this.data_id]
+        
+        const req = new XMLHttpRequest()
+        let url=""
+        
+        if(user.in_pharmtech)
+            {url = `api/remove_pharmtech_group?id=${user.user_id}`}
+        else{url = `api/add_pharmtech_group?id=${user.user_id}`}
+
+        req.onload = loadStaffList
+        req.open("GET", url)
+        req.send()
+    }
+
     function populateStaffList(){
+        if(this.status != 200){
+            staff_list_output.textContent = "Unable to refresh staff list."
+            return
+        }
+
+        staff_data = JSON.parse(this.responseText)
+        
+        // Remove the children
+        while(staff_list.childElementCount>1)
+        { staff_list.removeChild(staff_list.lastChild) }
+        
+        for(let i=0; i<staff_data.length;i++){
+            const user = staff_data[i]
+
+            const row = document.createElement("tr")
+
+            const user_id = document.createElement("td")
+            user_id.textContent = user.user_id
+            row.appendChild(user_id)
+
+            const username = document.createElement("td")
+            username.textContent = user.username
+            row.appendChild(username)
+
+            const l_name = document.createElement("td")
+            l_name.textContent = user.f_name
+            row.appendChild(l_name)
+
+            const f_name = document.createElement("td")
+            f_name.textContent = user.f_name
+            row.appendChild(f_name)
+
+            const m_name = document.createElement("td")
+            m_name.textContent = user.m_name
+            row.appendChild(m_name)
+        
+            const staff_active = document.createElement("td")
+            const staff_active_button = document.createElement("button")
+            staff_active_button.data_id = i
+            staff_active_button.addEventListener("click", toggleActive)
+            staff_active_button.textContent = (user.staff_active)?"True":"False"
+            staff_active.appendChild(staff_active_button)
+            row.appendChild(staff_active)
+        
+            const in_admin = document.createElement("td")
+            const in_admin_button = document.createElement("button")
+            in_admin_button.data_id = i
+            in_admin_button.addEventListener("click", toggleAdmin)
+            in_admin_button.textContent = (user.in_admin)?"True":"False"
+            in_admin.appendChild(in_admin_button)
+            row.appendChild(in_admin)
+
+            const in_asset = document.createElement("td")
+            const in_asset_button = document.createElement("button")
+            in_asset_button.data_id = i
+            in_asset_button.addEventListener("click", toggleAsset)
+            in_asset_button.textContent = (user.in_asset)?"True":"False"
+            in_asset.appendChild(in_asset_button)
+            row.appendChild(in_asset)
+
+        
+            const in_front = document.createElement("td")
+            const in_front_button = document.createElement("button")
+            in_front_button.data_id = i
+            in_front_button.addEventListener("click", toggleFront)
+            in_front_button.textContent = (user.in_front)?"True":"False"
+            in_front.appendChild(in_front_button)
+            row.appendChild(in_front)
+
+        
+            const in_pharmtech = document.createElement("td")
+            const in_pharmtech_button = document.createElement("button")
+            in_pharmtech_button.data_id = i
+            in_pharmtech_button.addEventListener("click", togglePharmTech)
+            in_pharmtech_button.textContent = (user.in_pharmtech)?"True":"False"
+            in_pharmtech.appendChild(in_pharmtech_button)
+            row.appendChild(in_pharmtech)
+            
+
+            staff_list.appendChild(row)
+        }
 
     }
 
     function loadStaffList(){
         const req = new XMLHttpRequest()
+        req.onload = populateStaffList
+        req.open("GET", "/api/read_staff_members")
+        req.send()
     }
 
     function addedStaffMember(req){
