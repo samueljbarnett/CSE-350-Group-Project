@@ -926,6 +926,46 @@ BEGIN
 END$$
 DELIMITER ;
 
+-- Add a asset
+DELIMITER $$
+CREATE PROCEDURE `hospital_db`.AddAsset(
+	p_staff_id INT,
+	p_bed_name VARCHAR(100),
+	p_location VARCHAR(100),
+	p_type VARCHAR(15),
+	p_count INT,
+	p_max_count INT
+)
+BEGIN
+	IF (SELECT COUNT(*)
+			FROM `hospital_db`.`group_entry`
+			WHERE (
+				`user_id` = p_staff_id
+			AND `group_id` IN 
+				(SELECT `group_id`
+					FROM `hospital_db`.`group`
+					WHERE `name_id` = "main_admin" OR `name_id` = "main_asset"
+				)
+			)
+		) < 1
+	THEN
+		SIGNAL SQLSTATE '45000'
+		SET MESSAGE_TEXT = "Permission error.";
+	END IF;
+
+	INSERT INTO `hospital_db`.`asset`
+		(`name`, `type`, `location`, `count`, `max_count`)
+	VALUES
+		(
+			p_bed_name,
+			p_type,
+			p_location,
+			p_count,
+			p_max_count
+		);
+END$$
+DELIMITER ;
+
 -- Get a user id from a name
 DELIMITER $$
 CREATE PROCEDURE `hospital_db`.GetUserId(

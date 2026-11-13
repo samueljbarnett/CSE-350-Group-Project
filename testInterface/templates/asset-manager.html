@@ -19,9 +19,6 @@
     </div>
 
     <div>
-        <label for="asset-id-input">Asset ID</label>
-        <input name="asset-id-input" id="asset-id-input">
-
         <label for="asset-label-input">Asset Label</label>
         <input name="asset-label-input" id="asset-label-input">
 
@@ -37,7 +34,7 @@
         <label for="asset-count-input">Asset Initial Count</label>
         <input name="asset-count-input" id="asset-count-input">
 
-        <button>Add Asset</button>
+        <button onclick="addasset()">Add Asset</button>
     </div>
     
     <button onclick="loadAssetList">Refresh Asset List</button>
@@ -63,7 +60,7 @@ table, th, td {
     const asset_list_output = document.getElementById("asset-list-error-output")
     const asset_add_output = document.getElementById("asset-addition-error-output")
 
-    function added_bed(){
+    function added_asset(){
         if(this.status == 200){
             loadAssetList()
             asset_add_output.textContent = "Added asset to database."
@@ -83,7 +80,28 @@ table, th, td {
             document.getElementById("bed-location-input").value
         }`
 
-        req.onload = added_bed
+        req.onload = added_asset
+        req.open("GET", url)
+        req.send()
+    }
+
+    function addasset(){
+        const asset = asset_data[this.data_id]
+
+        const req = new XMLHttpRequest()
+        let url=`/api/add_asset?label=${
+            document.getElementById("asset-label-input").value
+        }&location=${
+            document.getElementById("asset-location-input").value
+        }&type=${
+            document.getElementById("asset-type-input").value
+        }&count=${
+            document.getElementById("asset-count-input").value
+        }&max_count=${
+            document.getElementById("asset-max-count-input").value
+        }`
+
+        req.onload = added_asset
         req.open("GET", url)
         req.send()
     }
@@ -169,14 +187,6 @@ table, th, td {
             name.appendChild(name_input)
             row.appendChild(name)
 
-            const type = document.createElement("td")
-            const type_input = document.createElement("input")
-            type_input.data_id = i
-            type_input.addEventListener("change", change_type)
-            type_input.value = asset.type
-            type.appendChild(type_input)
-            row.appendChild(type)
-
             const location = document.createElement("td")
             const location_input = document.createElement("input")
             location_input.data_id = i
@@ -184,6 +194,14 @@ table, th, td {
             location_input.value = asset.location
             location.appendChild(location_input)
             row.appendChild(location)
+
+            const type = document.createElement("td")
+            const type_input = document.createElement("input")
+            type_input.data_id = i
+            type_input.addEventListener("change", change_type)
+            type_input.value = asset.type
+            type.appendChild(type_input)
+            row.appendChild(type)
 
             const count = document.createElement("td")
             const count_input = document.createElement("input")

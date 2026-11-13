@@ -516,6 +516,65 @@ app.post("/api/add_staff_member", async (req,res)=>{
 })
 
 
+app.get("/api/add_asset", async (req,res)=>{
+    const auth = await checkLogin(req)
+
+    // Ensure the user is logged in
+    if(!auth){
+        res.writeHead(401, {"content-type":"text/plain"})
+        res.end('401 - Unauthorized')
+        return
+    }
+
+    if(!req.query.label){
+        res.writeHead(400, {"content-type":"text/plain"})
+        res.end('400 - Missing label')
+        return
+    }
+    if(!req.query.location){
+        res.writeHead(400, {"content-type":"text/plain"})
+        res.end('400 - Missing location')
+        return
+    }
+    if(!req.query.type){
+        res.writeHead(400, {"content-type":"text/plain"})
+        res.end('400 - Missing type')
+        return
+    }
+    if(!req.query.count){
+        res.writeHead(400, {"content-type":"text/plain"})
+        res.end('400 - Missing count')
+        return
+    }
+    if(!req.query.max_count){
+        res.writeHead(400, {"content-type":"text/plain"})
+        res.end('400 - Missing max count')
+        return
+    }
+
+    const ret = await SQLCall("CALL `hospital_db`.AddAsset(?, ?, ?, ?, ?, ?);",[
+            auth.id,
+            req.query.label,
+            req.query.location,
+            req.query.type,
+            req.query.count,
+            req.query.max_count,
+        ])
+
+    if(!ret) {
+        res.writeHead(403, {"content-type":"text/plain"})
+        res.end('403 - Forbidden')
+        return
+    }
+
+    try{
+        res.writeHead(200, {"content-type":"application/json"})
+        res.end(JSON.stringify(ret))
+    }catch{
+        res.writeHead(500, {"content-type":"text/plain"})
+        res.end('500 - Internal Error')
+    }
+})
 app.get("/api/add_bed", async (req,res)=>{
     const auth = await checkLogin(req)
 
