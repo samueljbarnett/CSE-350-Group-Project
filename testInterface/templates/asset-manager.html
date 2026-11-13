@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asset Manager</title>
+</head>
+<body>
+    <a href="/dashboard.html">Back to Main Dashboard</a>
+    <pre id="asset-addition-error-output"></pre>
+    <div>
+        <label for="bed-label-input">Bed Label</label>
+        <input name="bed-label-input" id="bed-label-input">
+
+        <label for="bed-location-input">Location</label>
+        <input name="bed-location-input" id="bed-location-input">
+
+        <button onclick="addbed()">Add Bed</button>
+    </div>
+
+    <div>
+        <label for="asset-label-input">Asset Label</label>
+        <input name="asset-label-input" id="asset-label-input">
+
+        <label for="asset-location-input">Asset Location</label>
+        <input name="asset-location-input" id="asset-location-input">
+
+        <label for="asset-type-input">Asset Type</label>
+        <input name="asset-type-input" id="asset-type-input">
+
+        <label for="asset-max-count-input">Asset Max Count</label>
+        <input name="asset-max-count-input" id="asset-max-count-input">
+
+        <label for="asset-count-input">Asset Initial Count</label>
+        <input name="asset-count-input" id="asset-count-input">
+
+        <button onclick="addasset()">Add Asset</button>
+    </div>
+    
+    <button onclick="loadAssetList">Refresh Asset List</button>
+    <pre id="asset-list-error-output"></pre>
+    <table id="asset-list">
+        <tr>
+            <th>Asset ID</th>
+            <th>Asset Label</th>
+            <th>Location</th>
+            <th>Type</th>
+            <th>Count</th>
+            <th>Max Count</th>
+        </tr>
+    </table>
+</body>
+<style>
+table, th, td {
+  border:1px solid black;
+}
+</style>
+<script>
+    const asset_list = document.getElementById("asset-list")
+    const asset_list_output = document.getElementById("asset-list-error-output")
+    const asset_add_output = document.getElementById("asset-addition-error-output")
+
+    function added_asset(){
+        if(this.status == 200){
+            loadAssetList()
+            asset_add_output.textContent = "Added asset to database."
+            return
+        }
+
+        asset_add_output.textContent = this.responseText
+    }
+
+    function addbed(){
+        const asset = asset_data[this.data_id]
+
+        const req = new XMLHttpRequest()
+        let url=`/api/add_bed?label=${
+            document.getElementById("bed-label-input").value
+        }&location=${
+            document.getElementById("bed-location-input").value
+        }`
+
+        req.onload = added_asset
+        req.open("GET", url)
+        req.send()
+    }
+
+    function addasset(){
+        const asset = asset_data[this.data_id]
+
+        const req = new XMLHttpRequest()
+        let url=`/api/add_asset?label=${
+            document.getElementById("asset-label-input").value
+        }&location=${
+            document.getElementById("asset-location-input").value
+        }&type=${
+            document.getElementById("asset-type-input").value
+        }&count=${
+            document.getElementById("asset-count-input").value
+        }&max_count=${
+            document.getElementById("asset-max-count-input").value
+        }`
+
+        req.onload = added_asset
+        req.open("GET", url)
+        req.send()
+    }
+
+    function change_name(){
+        const asset = asset_data[this.data_id]
+
+        const req = new XMLHttpRequest()
+        let url=`/api/change_asset_label?asset_id=${asset.asset_id}&value=${this.value}`
+
+        req.onload = loadAssetList
+        req.open("GET", url)
+        req.send()
+    }
+    function change_location(){
+        const asset = asset_data[this.data_id]
+
+        const req = new XMLHttpRequest()
+        let url=`/api/change_asset_location?asset_id=${asset.asset_id}&value=${this.value}`
+
+        req.onload = loadAssetList
+        req.open("GET", url)
+        req.send()
+    }
+    function change_type(){
+        const asset = asset_data[this.data_id]
+
+        const req = new XMLHttpRequest()
+        let url=`/api/change_asset_type?asset_id=${asset.asset_id}&value=${this.value}`
+
+        req.onload = loadAssetList
+        req.open("GET", url)
+        req.send()
+    }
+    function change_count(){
+        const asset = asset_data[this.data_id]
+
+        const req = new XMLHttpRequest()
+        let url=`/api/change_asset_count?asset_id=${asset.asset_id}&value=${this.value}`
+
+        req.onload = loadAssetList
+        req.open("GET", url)
+        req.send()
+    }
+    function change_max_count(){
+        const asset = asset_data[this.data_id]
+
+        const req = new XMLHttpRequest()
+        let url=`/api/change_asset_max_count?asset_id=${asset.asset_id}&value=${this.value}`
+
+        req.onload = loadAssetList
+        req.open("GET", url)
+        req.send()
+    }
+
+    
+    function populateAssetList(){
+        if(this.status != 200){
+            asset_list_output.textContent = "Unable to refresh asset list."
+            return
+        }
+
+        asset_data = JSON.parse(this.responseText)
+        
+        // Remove the children
+        while(asset_list.childElementCount>1)
+        { asset_list.removeChild(asset_list.lastChild) }
+        
+        for(let i=0; i<asset_data.length;i++){
+            const asset = asset_data[i]
+
+            const row = document.createElement("tr")
+
+            const asset_id = document.createElement("td")
+            asset_id.textContent = asset.asset_id
+            row.appendChild(asset_id)
+
+            const name = document.createElement("td")
+            const name_input = document.createElement("input")
+            name_input.data_id = i
+            name_input.addEventListener("change", change_name)
+            name_input.value = asset.name
+            name.appendChild(name_input)
+            row.appendChild(name)
+
+            const location = document.createElement("td")
+            const location_input = document.createElement("input")
+            location_input.data_id = i
+            location_input.addEventListener("change", change_location)
+            location_input.value = asset.location
+            location.appendChild(location_input)
+            row.appendChild(location)
+
+            const type = document.createElement("td")
+            const type_input = document.createElement("input")
+            type_input.data_id = i
+            type_input.addEventListener("change", change_type)
+            type_input.value = asset.type
+            type.appendChild(type_input)
+            row.appendChild(type)
+
+            const count = document.createElement("td")
+            const count_input = document.createElement("input")
+            count_input.data_id = i
+            count_input.type = "number"
+            count_input.min = 0
+            count_input.max = asset.max_count
+            count_input.addEventListener("change", change_count)
+            count_input.value = asset.count
+            count.appendChild(count_input)
+            row.appendChild(count)
+
+            const max_count = document.createElement("td")
+            const max_count_input = document.createElement("input")
+            max_count_input.data_id = i
+            max_count_input.type = "number"
+            max_count_input.min = 0
+            max_count_input.addEventListener("change", change_max_count)
+            max_count_input.value = asset.max_count
+            max_count.appendChild(max_count_input)
+            row.appendChild(max_count)
+
+            asset_list.appendChild(row)
+        }
+
+    }
+
+    function loadAssetList(){
+        const req = new XMLHttpRequest()
+        req.onload = populateAssetList
+        req.open("GET", "/api/read_assets")
+        req.send()
+    }
+
+    loadAssetList()
+</script>
+</html>

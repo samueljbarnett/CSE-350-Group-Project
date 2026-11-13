@@ -401,6 +401,28 @@ app.get("/dashboard.html", async (req,res)=>{
 })
 
 
+app.get("/asset-manager.html", async (req,res)=>{
+    const auth = await checkLogin(req)
+
+    // Ensure the user is logged in
+    if(!auth){
+        res.redirect('login.html?redirect=%2Fstaff-manager.html')
+        return
+    }
+
+    // Get information about the logged in user
+    const inAssetGroup = await SQLCall("CALL InAssetGroup(?)", [auth.id])
+    
+    if(!inAssetGroup[0].granted) {
+        res.redirect("/bad-permissions.html")
+        return
+    }
+
+    res.writeHead(200, {"content-type":"text/html"})
+    res.end(render("asset-manager.html", req, auth))
+})
+
+
 app.get("/staff-manager.html", async (req,res)=>{
     const auth = await checkLogin(req)
 
@@ -493,6 +515,334 @@ app.post("/api/add_staff_member", async (req,res)=>{
     }
 })
 
+app.get("/api/change_asset_max_count", async (req,res)=>{
+    const auth = await checkLogin(req)
+
+    // Ensure the user is logged in
+    if(!auth){
+        res.writeHead(401, {"content-type":"text/plain"})
+        res.end('401 - Unauthorized')
+        return
+    }
+
+    if(!req.query.asset_id){
+        res.writeHead(400, {"content-type":"text/plain"})
+        res.end('400 - Missing asset ID')
+        return
+    }
+    if(!req.query.value){
+        res.writeHead(400, {"content-type":"text/plain"})
+        res.end('400 - Missing value')
+        return
+    }
+
+    const ret = await SQLCall("CALL `hospital_db`.ChangeAssetMaxCount(?, ?, ?);",[
+            auth.id,
+            req.query.asset_id,
+            req.query.value
+        ])
+
+    if(!ret) {
+        res.writeHead(403, {"content-type":"text/plain"})
+        res.end('403 - Forbidden')
+        return
+    }
+
+    try{
+        res.writeHead(200, {"content-type":"application/json"})
+        res.end(JSON.stringify(ret))
+    }catch{
+        res.writeHead(500, {"content-type":"text/plain"})
+        res.end('500 - Internal Error')
+    }
+})
+app.get("/api/change_asset_count", async (req,res)=>{
+    const auth = await checkLogin(req)
+
+    // Ensure the user is logged in
+    if(!auth){
+        res.writeHead(401, {"content-type":"text/plain"})
+        res.end('401 - Unauthorized')
+        return
+    }
+
+    if(!req.query.asset_id){
+        res.writeHead(400, {"content-type":"text/plain"})
+        res.end('400 - Missing asset ID')
+        return
+    }
+    if(!req.query.value){
+        res.writeHead(400, {"content-type":"text/plain"})
+        res.end('400 - Missing value')
+        return
+    }
+
+    const ret = await SQLCall("CALL `hospital_db`.ChangeAssetCount(?, ?, ?);",[
+            auth.id,
+            req.query.asset_id,
+            req.query.value
+        ])
+
+    if(!ret) {
+        res.writeHead(403, {"content-type":"text/plain"})
+        res.end('403 - Forbidden')
+        return
+    }
+
+    try{
+        res.writeHead(200, {"content-type":"application/json"})
+        res.end(JSON.stringify(ret))
+    }catch{
+        res.writeHead(500, {"content-type":"text/plain"})
+        res.end('500 - Internal Error')
+    }
+})
+app.get("/api/change_asset_type", async (req,res)=>{
+    const auth = await checkLogin(req)
+
+    // Ensure the user is logged in
+    if(!auth){
+        res.writeHead(401, {"content-type":"text/plain"})
+        res.end('401 - Unauthorized')
+        return
+    }
+
+    if(!req.query.asset_id){
+        res.writeHead(400, {"content-type":"text/plain"})
+        res.end('400 - Missing asset ID')
+        return
+    }
+    if(!req.query.value){
+        res.writeHead(400, {"content-type":"text/plain"})
+        res.end('400 - Missing value')
+        return
+    }
+
+    const ret = await SQLCall("CALL `hospital_db`.ChangeAssetType(?, ?, ?);",[
+            auth.id,
+            req.query.asset_id,
+            req.query.value
+        ])
+
+    if(!ret) {
+        res.writeHead(403, {"content-type":"text/plain"})
+        res.end('403 - Forbidden')
+        return
+    }
+
+    try{
+        res.writeHead(200, {"content-type":"application/json"})
+        res.end(JSON.stringify(ret))
+    }catch{
+        res.writeHead(500, {"content-type":"text/plain"})
+        res.end('500 - Internal Error')
+    }
+})
+app.get("/api/change_asset_location", async (req,res)=>{
+    const auth = await checkLogin(req)
+
+    // Ensure the user is logged in
+    if(!auth){
+        res.writeHead(401, {"content-type":"text/plain"})
+        res.end('401 - Unauthorized')
+        return
+    }
+
+    if(!req.query.asset_id){
+        res.writeHead(400, {"content-type":"text/plain"})
+        res.end('400 - Missing asset ID')
+        return
+    }
+    if(!req.query.value){
+        res.writeHead(400, {"content-type":"text/plain"})
+        res.end('400 - Missing value')
+        return
+    }
+
+    const ret = await SQLCall("CALL `hospital_db`.ChangeAssetLocation(?, ?, ?);",[
+            auth.id,
+            req.query.asset_id,
+            req.query.value
+        ])
+
+    if(!ret) {
+        res.writeHead(403, {"content-type":"text/plain"})
+        res.end('403 - Forbidden')
+        return
+    }
+
+    try{
+        res.writeHead(200, {"content-type":"application/json"})
+        res.end(JSON.stringify(ret))
+    }catch{
+        res.writeHead(500, {"content-type":"text/plain"})
+        res.end('500 - Internal Error')
+    }
+})
+app.get("/api/change_asset_label", async (req,res)=>{
+    const auth = await checkLogin(req)
+
+    // Ensure the user is logged in
+    if(!auth){
+        res.writeHead(401, {"content-type":"text/plain"})
+        res.end('401 - Unauthorized')
+        return
+    }
+
+    if(!req.query.asset_id){
+        res.writeHead(400, {"content-type":"text/plain"})
+        res.end('400 - Missing asset ID')
+        return
+    }
+    if(!req.query.value){
+        res.writeHead(400, {"content-type":"text/plain"})
+        res.end('400 - Missing value')
+        return
+    }
+
+    const ret = await SQLCall("CALL `hospital_db`.ChangeAssetName(?, ?, ?);",[
+            auth.id,
+            req.query.asset_id,
+            req.query.value
+        ])
+
+    if(!ret) {
+        res.writeHead(403, {"content-type":"text/plain"})
+        res.end('403 - Forbidden')
+        return
+    }
+
+    try{
+        res.writeHead(200, {"content-type":"application/json"})
+        res.end(JSON.stringify(ret))
+    }catch{
+        res.writeHead(500, {"content-type":"text/plain"})
+        res.end('500 - Internal Error')
+    }
+})
+app.get("/api/add_asset", async (req,res)=>{
+    const auth = await checkLogin(req)
+
+    // Ensure the user is logged in
+    if(!auth){
+        res.writeHead(401, {"content-type":"text/plain"})
+        res.end('401 - Unauthorized')
+        return
+    }
+
+    if(!req.query.label){
+        res.writeHead(400, {"content-type":"text/plain"})
+        res.end('400 - Missing label')
+        return
+    }
+    if(!req.query.location){
+        res.writeHead(400, {"content-type":"text/plain"})
+        res.end('400 - Missing location')
+        return
+    }
+    if(!req.query.type){
+        res.writeHead(400, {"content-type":"text/plain"})
+        res.end('400 - Missing type')
+        return
+    }
+    if(!req.query.count){
+        res.writeHead(400, {"content-type":"text/plain"})
+        res.end('400 - Missing count')
+        return
+    }
+    if(!req.query.max_count){
+        res.writeHead(400, {"content-type":"text/plain"})
+        res.end('400 - Missing max count')
+        return
+    }
+
+    const ret = await SQLCall("CALL `hospital_db`.AddAsset(?, ?, ?, ?, ?, ?);",[
+            auth.id,
+            req.query.label,
+            req.query.location,
+            req.query.type,
+            req.query.count,
+            req.query.max_count,
+        ])
+
+    if(!ret) {
+        res.writeHead(403, {"content-type":"text/plain"})
+        res.end('403 - Forbidden')
+        return
+    }
+
+    try{
+        res.writeHead(200, {"content-type":"application/json"})
+        res.end(JSON.stringify(ret))
+    }catch{
+        res.writeHead(500, {"content-type":"text/plain"})
+        res.end('500 - Internal Error')
+    }
+})
+app.get("/api/add_bed", async (req,res)=>{
+    const auth = await checkLogin(req)
+
+    // Ensure the user is logged in
+    if(!auth){
+        res.writeHead(401, {"content-type":"text/plain"})
+        res.end('401 - Unauthorized')
+        return
+    }
+
+    if(!req.query.label){
+        res.writeHead(400, {"content-type":"text/plain"})
+        res.end('400 - Missing label')
+        return
+    }
+    if(!req.query.location){
+        res.writeHead(400, {"content-type":"text/plain"})
+        res.end('400 - Missing location')
+        return
+    }
+
+    const ret = await SQLCall("CALL `hospital_db`.AddBed(?, ?, ?);",
+        [auth.id, req.query.label, req.query.location])
+
+    if(!ret) {
+        res.writeHead(403, {"content-type":"text/plain"})
+        res.end('403 - Forbidden')
+        return
+    }
+
+    try{
+        res.writeHead(200, {"content-type":"application/json"})
+        res.end(JSON.stringify(ret))
+    }catch{
+        res.writeHead(500, {"content-type":"text/plain"})
+        res.end('500 - Internal Error')
+    }
+})
+app.get("/api/read_assets", async (req,res)=>{
+    const auth = await checkLogin(req)
+
+    // Ensure the user is logged in
+    if(!auth){
+        res.writeHead(403, {"content-type":"text/plain"})
+        res.end('401 - Unauthorized')
+        return
+    }
+
+    const ret = await SQLCall("CALL `hospital_db`.ReadAssets(?);", [auth.id])
+
+    if(!ret) {
+        res.writeHead(403, {"content-type":"text/plain"})
+        res.end('403 - Forbidden')
+        return
+    }
+
+    try{
+        res.writeHead(200, {"content-type":"application/json"})
+        res.end(JSON.stringify(ret))
+    }catch{
+        res.writeHead(500, {"content-type":"text/plain"})
+        res.end('500 - Internal Error')
+    }
+})
 
 app.get("/api/read_staff_members", async (req,res)=>{
     const auth = await checkLogin(req)
@@ -520,7 +870,6 @@ app.get("/api/read_staff_members", async (req,res)=>{
         res.end('500 - Internal Error')
     }
 })
-
 app.get("/api/add_admin_group", async (req,res)=>{
     const auth = await checkLogin(req)
 
@@ -587,7 +936,6 @@ app.get("/api/remove_admin_group", async (req,res)=>{
         res.end('500 - Internal Error')
     }
 })
-
 app.get("/api/add_asset_group", async (req,res)=>{
     const auth = await checkLogin(req)
 
