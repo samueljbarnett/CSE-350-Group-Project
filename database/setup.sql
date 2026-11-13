@@ -966,6 +966,158 @@ BEGIN
 END$$
 DELIMITER ;
 
+
+-- Change an assets max count
+DELIMITER $$
+CREATE PROCEDURE `hospital_db`.ChangeAssetMaxCount(
+	p_staff_id INT,
+	p_asset_id INT,
+	p_value INT
+)
+BEGIN
+	IF (SELECT COUNT(*)
+			FROM `hospital_db`.`group_entry`
+			WHERE (
+				`user_id` = p_staff_id
+			AND `group_id` IN 
+				(SELECT `group_id`
+					FROM `hospital_db`.`group`
+					WHERE `name_id` = "main_admin" OR `name_id` = "main_asset"
+				)
+			)
+		) < 1
+	THEN
+		SIGNAL SQLSTATE '45000'
+		SET MESSAGE_TEXT = "Permission error.";
+	END IF;
+
+	UPDATE `hospital_db`.`asset`
+		SET asset.`max_count` = p_value
+		WHERE `asset_id` = p_asset_id;
+END$$
+DELIMITER ;
+
+-- Change an assets count
+DELIMITER $$
+CREATE PROCEDURE `hospital_db`.ChangeAssetCount(
+	p_staff_id INT,
+	p_asset_id INT,
+	p_value INT
+)
+BEGIN
+	IF (SELECT COUNT(*)
+			FROM `hospital_db`.`group_entry`
+			WHERE (
+				`user_id` = p_staff_id
+			AND `group_id` IN 
+				(SELECT `group_id`
+					FROM `hospital_db`.`group`
+					WHERE `name_id` = "main_admin" OR `name_id` = "main_asset"
+				)
+			)
+		) < 1
+	THEN
+		SIGNAL SQLSTATE '45000'
+		SET MESSAGE_TEXT = "Permission error.";
+	END IF;
+
+	UPDATE `hospital_db`.`asset`
+		SET asset.`count` = p_value
+		WHERE `asset_id` = p_asset_id;
+END$$
+DELIMITER ;
+
+-- Change an assets location
+DELIMITER $$
+CREATE PROCEDURE `hospital_db`.ChangeAssetLocation(
+	p_staff_id INT,
+	p_asset_id INT,
+	p_value VARCHAR(100)
+)
+BEGIN
+	IF (SELECT COUNT(*)
+			FROM `hospital_db`.`group_entry`
+			WHERE (
+				`user_id` = p_staff_id
+			AND `group_id` IN 
+				(SELECT `group_id`
+					FROM `hospital_db`.`group`
+					WHERE `name_id` = "main_admin" OR `name_id` = "main_asset"
+				)
+			)
+		) < 1
+	THEN
+		SIGNAL SQLSTATE '45000'
+		SET MESSAGE_TEXT = "Permission error.";
+	END IF;
+
+	UPDATE `hospital_db`.`asset`
+		SET asset.`location` = p_value
+		WHERE `asset_id` = p_asset_id;
+END$$
+DELIMITER ;
+
+-- Change an assets type
+DELIMITER $$
+CREATE PROCEDURE `hospital_db`.ChangeAssetType(
+	p_staff_id INT,
+	p_asset_id INT,
+	p_value VARCHAR(15)
+)
+BEGIN
+	IF (SELECT COUNT(*)
+			FROM `hospital_db`.`group_entry`
+			WHERE (
+				`user_id` = p_staff_id
+			AND `group_id` IN 
+				(SELECT `group_id`
+					FROM `hospital_db`.`group`
+					WHERE `name_id` = "main_admin" OR `name_id` = "main_asset"
+				)
+			)
+		) < 1
+	THEN
+		SIGNAL SQLSTATE '45000'
+		SET MESSAGE_TEXT = "Permission error.";
+	END IF;
+
+	UPDATE `hospital_db`.`asset`
+		SET asset.`type` = p_value
+		WHERE `asset_id` = p_asset_id;
+END$$
+DELIMITER ;
+
+-- Change an assets name
+DELIMITER $$
+CREATE PROCEDURE `hospital_db`.ChangeAssetName(
+	p_staff_id INT,
+	p_asset_id INT,
+	p_value VARCHAR(100)
+)
+BEGIN
+	IF (SELECT COUNT(*)
+			FROM `hospital_db`.`group_entry`
+			WHERE (
+				`user_id` = p_staff_id
+			AND `group_id` IN 
+				(SELECT `group_id`
+					FROM `hospital_db`.`group`
+					WHERE `name_id` = "main_admin" OR `name_id` = "main_asset"
+				)
+			)
+		) < 1
+	THEN
+		SIGNAL SQLSTATE '45000'
+		SET MESSAGE_TEXT = "Permission error.";
+	END IF;
+
+	UPDATE `hospital_db`.`asset`
+		SET asset.`name` = p_value
+		WHERE `asset_id` = p_asset_id;
+END$$
+DELIMITER ;
+
+
 -- Get a user id from a name
 DELIMITER $$
 CREATE PROCEDURE `hospital_db`.GetUserId(

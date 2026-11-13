@@ -515,7 +515,211 @@ app.post("/api/add_staff_member", async (req,res)=>{
     }
 })
 
+app.get("/api/change_asset_max_count", async (req,res)=>{
+    const auth = await checkLogin(req)
 
+    // Ensure the user is logged in
+    if(!auth){
+        res.writeHead(401, {"content-type":"text/plain"})
+        res.end('401 - Unauthorized')
+        return
+    }
+
+    if(!req.query.asset_id){
+        res.writeHead(400, {"content-type":"text/plain"})
+        res.end('400 - Missing asset ID')
+        return
+    }
+    if(!req.query.value){
+        res.writeHead(400, {"content-type":"text/plain"})
+        res.end('400 - Missing value')
+        return
+    }
+
+    const ret = await SQLCall("CALL `hospital_db`.ChangeAssetMaxCount(?, ?, ?);",[
+            auth.id,
+            req.query.asset_id,
+            req.query.value
+        ])
+
+    if(!ret) {
+        res.writeHead(403, {"content-type":"text/plain"})
+        res.end('403 - Forbidden')
+        return
+    }
+
+    try{
+        res.writeHead(200, {"content-type":"application/json"})
+        res.end(JSON.stringify(ret))
+    }catch{
+        res.writeHead(500, {"content-type":"text/plain"})
+        res.end('500 - Internal Error')
+    }
+})
+app.get("/api/change_asset_count", async (req,res)=>{
+    const auth = await checkLogin(req)
+
+    // Ensure the user is logged in
+    if(!auth){
+        res.writeHead(401, {"content-type":"text/plain"})
+        res.end('401 - Unauthorized')
+        return
+    }
+
+    if(!req.query.asset_id){
+        res.writeHead(400, {"content-type":"text/plain"})
+        res.end('400 - Missing asset ID')
+        return
+    }
+    if(!req.query.value){
+        res.writeHead(400, {"content-type":"text/plain"})
+        res.end('400 - Missing value')
+        return
+    }
+
+    const ret = await SQLCall("CALL `hospital_db`.ChangeAssetCount(?, ?, ?);",[
+            auth.id,
+            req.query.asset_id,
+            req.query.value
+        ])
+
+    if(!ret) {
+        res.writeHead(403, {"content-type":"text/plain"})
+        res.end('403 - Forbidden')
+        return
+    }
+
+    try{
+        res.writeHead(200, {"content-type":"application/json"})
+        res.end(JSON.stringify(ret))
+    }catch{
+        res.writeHead(500, {"content-type":"text/plain"})
+        res.end('500 - Internal Error')
+    }
+})
+app.get("/api/change_asset_type", async (req,res)=>{
+    const auth = await checkLogin(req)
+
+    // Ensure the user is logged in
+    if(!auth){
+        res.writeHead(401, {"content-type":"text/plain"})
+        res.end('401 - Unauthorized')
+        return
+    }
+
+    if(!req.query.asset_id){
+        res.writeHead(400, {"content-type":"text/plain"})
+        res.end('400 - Missing asset ID')
+        return
+    }
+    if(!req.query.value){
+        res.writeHead(400, {"content-type":"text/plain"})
+        res.end('400 - Missing value')
+        return
+    }
+
+    const ret = await SQLCall("CALL `hospital_db`.ChangeAssetType(?, ?, ?);",[
+            auth.id,
+            req.query.asset_id,
+            req.query.value
+        ])
+
+    if(!ret) {
+        res.writeHead(403, {"content-type":"text/plain"})
+        res.end('403 - Forbidden')
+        return
+    }
+
+    try{
+        res.writeHead(200, {"content-type":"application/json"})
+        res.end(JSON.stringify(ret))
+    }catch{
+        res.writeHead(500, {"content-type":"text/plain"})
+        res.end('500 - Internal Error')
+    }
+})
+app.get("/api/change_asset_location", async (req,res)=>{
+    const auth = await checkLogin(req)
+
+    // Ensure the user is logged in
+    if(!auth){
+        res.writeHead(401, {"content-type":"text/plain"})
+        res.end('401 - Unauthorized')
+        return
+    }
+
+    if(!req.query.asset_id){
+        res.writeHead(400, {"content-type":"text/plain"})
+        res.end('400 - Missing asset ID')
+        return
+    }
+    if(!req.query.value){
+        res.writeHead(400, {"content-type":"text/plain"})
+        res.end('400 - Missing value')
+        return
+    }
+
+    const ret = await SQLCall("CALL `hospital_db`.ChangeAssetLocation(?, ?, ?);",[
+            auth.id,
+            req.query.asset_id,
+            req.query.value
+        ])
+
+    if(!ret) {
+        res.writeHead(403, {"content-type":"text/plain"})
+        res.end('403 - Forbidden')
+        return
+    }
+
+    try{
+        res.writeHead(200, {"content-type":"application/json"})
+        res.end(JSON.stringify(ret))
+    }catch{
+        res.writeHead(500, {"content-type":"text/plain"})
+        res.end('500 - Internal Error')
+    }
+})
+app.get("/api/change_asset_label", async (req,res)=>{
+    const auth = await checkLogin(req)
+
+    // Ensure the user is logged in
+    if(!auth){
+        res.writeHead(401, {"content-type":"text/plain"})
+        res.end('401 - Unauthorized')
+        return
+    }
+
+    if(!req.query.asset_id){
+        res.writeHead(400, {"content-type":"text/plain"})
+        res.end('400 - Missing asset ID')
+        return
+    }
+    if(!req.query.value){
+        res.writeHead(400, {"content-type":"text/plain"})
+        res.end('400 - Missing value')
+        return
+    }
+
+    const ret = await SQLCall("CALL `hospital_db`.ChangeAssetName(?, ?, ?);",[
+            auth.id,
+            req.query.asset_id,
+            req.query.value
+        ])
+
+    if(!ret) {
+        res.writeHead(403, {"content-type":"text/plain"})
+        res.end('403 - Forbidden')
+        return
+    }
+
+    try{
+        res.writeHead(200, {"content-type":"application/json"})
+        res.end(JSON.stringify(ret))
+    }catch{
+        res.writeHead(500, {"content-type":"text/plain"})
+        res.end('500 - Internal Error')
+    }
+})
 app.get("/api/add_asset", async (req,res)=>{
     const auth = await checkLogin(req)
 
