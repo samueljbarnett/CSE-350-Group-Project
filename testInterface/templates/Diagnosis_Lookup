@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Diagnosis Lookup</title>
+</head>
+<body>
+
+<h1>Diagnosis Lookup</h1>
+
+<input
+type="text"
+placeholder="Enter symptoms">
+
+<button>Search</button>
+
+<h2>Possible Diagnoses</h2>
+
+<ul>
+    <li>Common Cold</li>
+    <li>Influenza</li>
+    <li>COVID-19</li>
+</ul>
+
+</body>
+</html>

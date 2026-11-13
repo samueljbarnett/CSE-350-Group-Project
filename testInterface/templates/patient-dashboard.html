@@ -1,15 +1,39 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>New Account</title>
+    <title>Patient Dashboard</title>
 </head>
 <body>
-    <h1>Hello <serverside value="name"/>,</h1>
 
-    <serverside src="newAccountPopup.js"/>
+<serverside src="newAccountPopup.js"/>
 
-    <p><serverside value="view"/></p>
+<h1>Patient Dashboard</h1>
+
+<h2>Medical History</h2>
+<ul>
+    <li>Annual Checkup - 2026</li>
+    <li>Flu Treatment - 2025</li>
+</ul>
+
+<h2>Upcoming Appointments</h2>
+<ul>
+    <li>November 20, 2026 - Dr. Smith</li>
+    <li>December 10, 2026 - Follow Up</li>
+</ul>
+
+<h2>Schedule Appointment</h2>
+
+<form>
+    <label>Date:</label>
+    <input type="date">
+    <br><br>
+
+    <label>Reason:</label>
+    <input type="text">
+    <br><br>
+
+    <button type="submit">Schedule</button>
+</form>
+
 </body>
 </html>
