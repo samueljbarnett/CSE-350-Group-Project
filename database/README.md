@@ -32,9 +32,28 @@ with a new strong password.
 
 7. Run `source setup.sql` to run the setup script.
 
-8. Create a user for the webapp to use with the following command. Make sure to
+8. *NOTE* After running this script, a user account will be created in the
+database with the username `admin`, and password `password`. This user is added
+to the admin group to create other privileged users. Remember to change this
+password before making the webapp publicly available.
+
+9. Create a user for the webapp to use with the following command. Make sure to
 keep track of the newly generated password, or specify your own method of
 authentication in the command.
 ``` SQL
 CREATE USER IF NOT EXISTS 'hospital_webapp' IDENTIFIED BY RANDOM PASSWORD DEFAULT ROLE 'hospital_webapp_role';
 ```
+
+
+
+# Recommendations
+
+- Keep this database protected from the public facing network
+
+- Keep all passwords safe and store them securely
+
+- Make sure to change all default passwords
+
+- When creating staff accounts, adhere to the rule of least privilege
+
+- Create a replica of this database, set to backup all of its information

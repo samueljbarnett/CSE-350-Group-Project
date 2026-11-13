@@ -400,6 +400,393 @@ app.get("/dashboard.html", async (req,res)=>{
     }
 })
 
+
+app.get("/staff-manager.html", async (req,res)=>{
+    const auth = await checkLogin(req)
+
+    // Ensure the user is logged in
+    if(!auth){
+        res.redirect('login.html?redirect=%2Fstaff-manager.html')
+        return
+    }
+
+    // Get information about the logged in user
+    const inAdminGroup = await SQLCall("CALL InAdminGroup(?)", [auth.id])
+
+    if(!inAdminGroup[0].granted) {
+        res.redirect("/bad-permissions.html")
+        return
+    }
+
+    res.writeHead(200, {"content-type":"text/html"})
+    res.end(render("staff-manager.html", req, auth))
+})
+
+app.post("/api/add_staff_member", async (req,res)=>{
+    const auth = await checkLogin(req)
+
+    // Ensure the user is logged in
+    if(!auth){
+        res.writeHead(403, {"content-type":"text/plain"})
+        res.end('401 - Unauthorized')
+        return
+    }
+
+    // Get information about the logged in user
+    const inAdminGroup = await SQLCall("CALL InAdminGroup(?)", [auth.id])
+
+    if(!inAdminGroup[0].granted) {
+        res.writeHead(403, {"content-type":"text/plain"})
+        res.end('403 - Forbidden')
+        return
+    }
+
+    if(!req.query.id){
+        res.writeHead(400, {"content-type":"text/plain"})
+        res.end('400 - Missing ID')
+        return
+    }
+    if(!req.query.f_name){
+        res.writeHead(400, {"content-type":"text/plain"})
+        res.end('400 - Missing first name')
+        return
+    }
+    if(!req.query.m_name){
+        res.writeHead(400, {"content-type":"text/plain"})
+        res.end('400 - Missing middle name')
+        return
+    }
+    if(!req.query.l_name){
+        res.writeHead(400, {"content-type":"text/plain"})
+        res.end('400 - Missing last name')
+        return
+    }
+
+    const id = await SQLCall("CALL `hospital_db`.GetUserId(?);",[req.query.id])
+    
+    if(id[0] == undefined){
+        res.writeHead(400, {"content-type":"text/plain"})
+        res.end('400 - Invalid ID')
+        return
+    }
+
+    const ret = await SQLCall("CALL `hospital_db`.CreateStaff(?, ?, ?, ?, ?);",[
+        auth.id,
+        id[0].user_id,
+        req.query.f_name,
+        req.query.m_name,
+        req.query.l_name
+    ])
+
+    if(ret == false){
+        res.writeHead(400, {"content-type":"text/plain"})
+        res.end('400 - Staff already exists')
+        return
+    }
+
+    try{
+        res.writeHead(200, {"content-type":"application/json"})
+        res.end(JSON.stringify(ret[0]))
+    }catch{
+        res.writeHead(500, {"content-type":"text/plain"})
+        res.end('500 - Internal Error')
+    }
+})
+
+
+app.get("/api/read_staff_members", async (req,res)=>{
+    const auth = await checkLogin(req)
+
+    // Ensure the user is logged in
+    if(!auth){
+        res.writeHead(403, {"content-type":"text/plain"})
+        res.end('401 - Unauthorized')
+        return
+    }
+
+    const ret = await SQLCall("CALL `hospital_db`.ReadStaffMembers(?);", [auth.id])
+
+    if(!ret) {
+        res.writeHead(403, {"content-type":"text/plain"})
+        res.end('403 - Forbidden')
+        return
+    }
+
+    try{
+        res.writeHead(200, {"content-type":"application/json"})
+        res.end(JSON.stringify(ret))
+    }catch{
+        res.writeHead(500, {"content-type":"text/plain"})
+        res.end('500 - Internal Error')
+    }
+})
+
+app.get("/api/add_admin_group", async (req,res)=>{
+    const auth = await checkLogin(req)
+
+    // Ensure the user is logged in
+    if(!auth){
+        res.writeHead(403, {"content-type":"text/plain"})
+        res.end('401 - Unauthorized')
+        return
+    }
+
+    if(!req.query.id){
+        res.writeHead(400, {"content-type":"text/plain"})
+        res.end('400 - Missing ID')
+        return
+    }
+
+    const ret = await SQLCall("CALL `hospital_db`.AddAdminGroup(?, ?);",
+        [auth.id, req.query.id])
+
+    if(!ret) {
+        res.writeHead(403, {"content-type":"text/plain"})
+        res.end('403 - Forbidden')
+        return
+    }
+
+    try{
+        res.writeHead(200, {"content-type":"application/json"})
+        res.end(JSON.stringify(ret))
+    }catch{
+        res.writeHead(500, {"content-type":"text/plain"})
+        res.end('500 - Internal Error')
+    }
+})
+app.get("/api/remove_admin_group", async (req,res)=>{
+    const auth = await checkLogin(req)
+
+    // Ensure the user is logged in
+    if(!auth){
+        res.writeHead(403, {"content-type":"text/plain"})
+        res.end('401 - Unauthorized')
+        return
+    }
+
+    if(!req.query.id){
+        res.writeHead(400, {"content-type":"text/plain"})
+        res.end('400 - Missing ID')
+        return
+    }
+
+    const ret = await SQLCall("CALL `hospital_db`.RemoveAdminGroup(?, ?);",
+        [auth.id, req.query.id])
+
+    if(!ret) {
+        res.writeHead(403, {"content-type":"text/plain"})
+        res.end('403 - Forbidden')
+        return
+    }
+
+    try{
+        res.writeHead(200, {"content-type":"application/json"})
+        res.end(JSON.stringify(ret))
+    }catch{
+        res.writeHead(500, {"content-type":"text/plain"})
+        res.end('500 - Internal Error')
+    }
+})
+
+app.get("/api/add_asset_group", async (req,res)=>{
+    const auth = await checkLogin(req)
+
+    // Ensure the user is logged in
+    if(!auth){
+        res.writeHead(403, {"content-type":"text/plain"})
+        res.end('401 - Unauthorized')
+        return
+    }
+
+    if(!req.query.id){
+        res.writeHead(400, {"content-type":"text/plain"})
+        res.end('400 - Missing ID')
+        return
+    }
+
+    const ret = await SQLCall("CALL `hospital_db`.AddAssetGroup(?, ?);",
+        [auth.id, req.query.id])
+
+    if(!ret) {
+        res.writeHead(403, {"content-type":"text/plain"})
+        res.end('403 - Forbidden')
+        return
+    }
+
+    try{
+        res.writeHead(200, {"content-type":"application/json"})
+        res.end(JSON.stringify(ret))
+    }catch{
+        res.writeHead(500, {"content-type":"text/plain"})
+        res.end('500 - Internal Error')
+    }
+})
+app.get("/api/remove_asset_group", async (req,res)=>{
+    const auth = await checkLogin(req)
+
+    // Ensure the user is logged in
+    if(!auth){
+        res.writeHead(403, {"content-type":"text/plain"})
+        res.end('401 - Unauthorized')
+        return
+    }
+
+    if(!req.query.id){
+        res.writeHead(400, {"content-type":"text/plain"})
+        res.end('400 - Missing ID')
+        return
+    }
+
+    const ret = await SQLCall("CALL `hospital_db`.RemoveAssetGroup(?, ?);",
+        [auth.id, req.query.id])
+
+    if(!ret) {
+        res.writeHead(403, {"content-type":"text/plain"})
+        res.end('403 - Forbidden')
+        return
+    }
+
+    try{
+        res.writeHead(200, {"content-type":"application/json"})
+        res.end(JSON.stringify(ret))
+    }catch{
+        res.writeHead(500, {"content-type":"text/plain"})
+        res.end('500 - Internal Error')
+    }
+})
+app.get("/api/add_front_group", async (req,res)=>{
+    const auth = await checkLogin(req)
+
+    // Ensure the user is logged in
+    if(!auth){
+        res.writeHead(403, {"content-type":"text/plain"})
+        res.end('401 - Unauthorized')
+        return
+    }
+
+    if(!req.query.id){
+        res.writeHead(400, {"content-type":"text/plain"})
+        res.end('400 - Missing ID')
+        return
+    }
+
+    const ret = await SQLCall("CALL `hospital_db`.AddFrontDeskGroup(?, ?);",
+        [auth.id, req.query.id])
+
+    if(!ret) {
+        res.writeHead(403, {"content-type":"text/plain"})
+        res.end('403 - Forbidden')
+        return
+    }
+
+    try{
+        res.writeHead(200, {"content-type":"application/json"})
+        res.end(JSON.stringify(ret))
+    }catch{
+        res.writeHead(500, {"content-type":"text/plain"})
+        res.end('500 - Internal Error')
+    }
+})
+app.get("/api/remove_front_group", async (req,res)=>{
+    const auth = await checkLogin(req)
+
+    // Ensure the user is logged in
+    if(!auth){
+        res.writeHead(403, {"content-type":"text/plain"})
+        res.end('401 - Unauthorized')
+        return
+    }
+
+    if(!req.query.id){
+        res.writeHead(400, {"content-type":"text/plain"})
+        res.end('400 - Missing ID')
+        return
+    }
+
+    const ret = await SQLCall("CALL `hospital_db`.RemoveFrontDeskGroup(?, ?);",
+        [auth.id, req.query.id])
+
+    if(!ret) {
+        res.writeHead(403, {"content-type":"text/plain"})
+        res.end('403 - Forbidden')
+        return
+    }
+
+    try{
+        res.writeHead(200, {"content-type":"application/json"})
+        res.end(JSON.stringify(ret))
+    }catch{
+        res.writeHead(500, {"content-type":"text/plain"})
+        res.end('500 - Internal Error')
+    }
+})
+app.get("/api/add_pharmtech_group", async (req,res)=>{
+    const auth = await checkLogin(req)
+
+    // Ensure the user is logged in
+    if(!auth){
+        res.writeHead(403, {"content-type":"text/plain"})
+        res.end('401 - Unauthorized')
+        return
+    }
+
+    if(!req.query.id){
+        res.writeHead(400, {"content-type":"text/plain"})
+        res.end('400 - Missing ID')
+        return
+    }
+
+    const ret = await SQLCall("CALL `hospital_db`.AddPharmTechGroup(?, ?);",
+        [auth.id, req.query.id])
+
+    if(!ret) {
+        res.writeHead(403, {"content-type":"text/plain"})
+        res.end('403 - Forbidden')
+        return
+    }
+
+    try{
+        res.writeHead(200, {"content-type":"application/json"})
+        res.end(JSON.stringify(ret))
+    }catch{
+        res.writeHead(500, {"content-type":"text/plain"})
+        res.end('500 - Internal Error')
+    }
+})
+app.get("/api/remove_pharmtech_group", async (req,res)=>{
+    const auth = await checkLogin(req)
+
+    // Ensure the user is logged in
+    if(!auth){
+        res.writeHead(403, {"content-type":"text/plain"})
+        res.end('401 - Unauthorized')
+        return
+    }
+
+    if(!req.query.id){
+        res.writeHead(400, {"content-type":"text/plain"})
+        res.end('400 - Missing ID')
+        return
+    }
+
+    const ret = await SQLCall("CALL `hospital_db`.RemovePharmTechGroup(?, ?);",
+        [auth.id, req.query.id])
+
+    if(!ret) {
+        res.writeHead(403, {"content-type":"text/plain"})
+        res.end('403 - Forbidden')
+        return
+    }
+
+    try{
+        res.writeHead(200, {"content-type":"application/json"})
+        res.end(JSON.stringify(ret))
+    }catch{
+        res.writeHead(500, {"content-type":"text/plain"})
+        res.end('500 - Internal Error')
+    }
+})
+
 // Create a connection to the database
 console.log("Connecting to database...")
 mysqlx.getSession(sql_config).then(async (conn)=>{
